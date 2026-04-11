@@ -90,7 +90,6 @@ export async function getTurnsForAdminDashboard() {
         necesitaTraslado: turnoData.necesitaTraslado || false,
         fecha: toISOStringOrNull(turnoData.fecha),
         comentario: turnoData.comentario || '',
-        motivoCancelacion: turnoData.motivoCancelacion || '',
         medicamentosSuministrados: turnoData.medicamentosSuministrados || [],
         user: serializableUser,
         mascota: serializableMascota,
@@ -163,7 +162,7 @@ export async function getTurnsForAdminDashboard() {
 }
 
 
-export async function updateTurnoStatus({ userId, mascotaId, turnoId, newStatus, newDate, motivoCancelacion }) {
+export async function updateTurnoStatus({ userId, mascotaId, turnoId, newStatus, newDate }) {
   try {
     if (!userId || !mascotaId || !turnoId || !newStatus) {
       throw new Error("Faltan parámetros requeridos.");
@@ -174,15 +173,6 @@ export async function updateTurnoStatus({ userId, mascotaId, turnoId, newStatus,
     const updateData = {
       estado: newStatus
     };
-
-    if (newStatus === 'cancelado') {
-      if (!motivoCancelacion || !motivoCancelacion.trim()) {
-        throw new Error("Debe indicar un motivo de cancelación.");
-      }
-      updateData.motivoCancelacion = motivoCancelacion.trim();
-    } else {
-      updateData.motivoCancelacion = '';
-    }
 
     if (newDate) {
       updateData.fecha = admin.firestore.Timestamp.fromDate(new Date(newDate));
@@ -227,3 +217,4 @@ export async function documentarTurno({ userId, mascotaId, turnoId, comentario, 
     return { success: false, error: `Error al documentar el turno: ${error.message}` };
   }
 }
+

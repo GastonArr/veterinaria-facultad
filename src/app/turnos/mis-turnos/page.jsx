@@ -82,20 +82,6 @@ const TurnoCard = ({ turno, compactarCancelado = false }) => {
                 </div>
             )}
 
-            {estaCancelado && (!compactarCancelado || mostrarDetalleCancelado) && (
-                <div className="mt-4 pt-4 border-t border-red-100 bg-red-50 rounded-lg p-3">
-                    <p className="text-sm font-semibold text-red-700">Motivo de cancelación:</p>
-                    <p className="text-sm text-red-800">{turno.motivoCancelacion || 'No informado por administración.'}</p>
-                    <Link
-                        href="/turnos/nuevo"
-                        className="inline-flex items-center mt-3 text-sm font-semibold text-red-700 hover:text-red-800"
-                    >
-                        Solicitar otro turno según disponibilidad
-                        <FaArrowRight className="ml-2" />
-                    </Link>
-                </div>
-            )}
-
             {necesitaReprogramacion && (
                 <div className="mt-4 pt-4 border-t border-gray-200 text-center">
                     <p className="text-sm text-orange-700 mb-3">Este turno necesita ser reprogramado.</p>
