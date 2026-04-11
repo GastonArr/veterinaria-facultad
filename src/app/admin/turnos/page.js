@@ -64,7 +64,7 @@ function TurnoCard({ turno, onUpdate, isUpdating, currentView, onDocumentar }) {
                   Reprogramar turno
                 </Link>
               )}
-              {turno.estado !== 'cancelado' && (<button onClick={() => onDocumentar(turno)} className="px-3 py-1 bg-indigo-500 text-white rounded hover:bg-indigo-600 transition-colors" title="Documentar Turno"><FaFileMedical /></button>)}
+              {currentView !== 'proximos' && turno.estado !== 'cancelado' && (<button onClick={() => onDocumentar(turno)} className="px-3 py-1 bg-indigo-500 text-white rounded hover:bg-indigo-600 transition-colors" title="Documentar Turno"><FaFileMedical /></button>)}
             </>
           )}
         </div>
