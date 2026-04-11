@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'; // hook 
 import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 
-const requirements = [
+export const passwordRequirements = [
     { id: 1, text: 'Al menos 8 caracteres', regex: /.{8,}/ },
     { id: 2, text: 'Al menos una letra minúscula (a-z)', regex: /[a-z]/ },
     { id: 3, text: 'Al menos una letra mayúscula (A-Z)', regex: /[A-Z]/ },
@@ -11,12 +11,14 @@ const requirements = [
     { id: 5, text: 'Al menos un carácter especial (!@#$...)', regex: /[^A-Za-z0-9]/ },
 ];
 
+export const validatePassword = (password) => passwordRequirements.every((requirement) => requirement.regex.test(password));
+
 const PasswordStrengthMeter = ({ password, onStrengthChange }) => {
     const [strength, setStrength] = useState({ percentage: 0, label: '', color: 'bg-gray-200' });
     const [metRequirements, setMetRequirements] = useState([]);
 
     useEffect(() => {
-        const satisfied = requirements.filter(req => req.regex.test(password));
+        const satisfied = passwordRequirements.filter(req => req.regex.test(password));
         const score = satisfied.length;
 
         if (onStrengthChange) {
@@ -25,7 +27,7 @@ const PasswordStrengthMeter = ({ password, onStrengthChange }) => {
 
         setMetRequirements(satisfied.map(req => req.id));
 
-        const percentage = (score / requirements.length) * 100;
+        const percentage = (score / passwordRequirements.length) * 100;
         let label = 'Muy Débil';
         let color = 'bg-red-500';
 
@@ -66,7 +68,7 @@ const PasswordStrengthMeter = ({ password, onStrengthChange }) => {
                 </>
             )}
             <div className="mt-3 space-y-1">
-                {requirements.map(req => {
+                {passwordRequirements.map(req => {
                     const isMet = metRequirements.includes(req.id);
                     return (
                         <div key={req.id} className="flex items-center text-xs">
