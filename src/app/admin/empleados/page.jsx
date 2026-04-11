@@ -19,10 +19,11 @@ async function EmpleadosPage() {
         </Link>
       </div>
       
-      <h1 className="text-3xl font-bold mb-6 text-gray-800">Gestión de Empleados y Roles</h1>
+      <h1 className="text-3xl font-bold mb-6 text-gray-800">Gestión de roles de usuarios</h1>
       
       <p className="mb-8 text-gray-600">
-        Aquí puedes asignar roles a los usuarios del sistema. Los roles determinan los permisos y accesos dentro de la aplicación.
+        Aquí puedes asignar roles a los usuarios del sistema y eliminarlos por completo cuando sea necesario.
+        Los roles determinan los permisos y accesos dentro de la aplicación.
       </p>
 
       {/* 

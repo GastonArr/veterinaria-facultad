@@ -200,3 +200,46 @@ export async function updateUserRole(userId, newRole) {
     return { success: false, error: 'Ocurrió un error en el servidor al intentar actualizar el rol.' };
   }
 }
+
+/**
+ * Elimina por completo un usuario del sistema (Firestore + Auth),
+ * incluyendo toda su información anidada (mascotas, turnos, historial, etc.).
+ */
+export async function deleteUserCompletely({ userId, requestedByUserId }) {
+  if (!userId) {
+    return { success: false, error: 'Falta el ID del usuario a eliminar.' };
+  }
+
+  if (requestedByUserId && userId === requestedByUserId) {
+    return { success: false, error: 'No puedes eliminar tu propio usuario administrador.' };
+  }
+
+  const auth = admin.auth();
+  const userRef = db.collection('users').doc(userId);
+
+  try {
+    // 1) Borra TODO el árbol de documentos dentro de users/{userId}
+    // (mascotas, turnos, carnetSanitario, etc.).
+    await db.recursiveDelete(userRef);
+
+    // 2) Borra el usuario de Firebase Authentication.
+    try {
+      await auth.deleteUser(userId);
+    } catch (authError) {
+      if (authError.code !== 'auth/user-not-found') {
+        throw authError;
+      }
+    }
+
+    revalidatePath('/admin/empleados');
+    revalidatePath('/admin/clientes');
+    revalidatePath('/admin/turnos');
+    revalidatePath('/turnos/mis-turnos');
+    revalidatePath('/mascotas');
+
+    return { success: true, message: 'Usuario eliminado por completo.' };
+  } catch (error) {
+    console.error(`Error al eliminar por completo al usuario ${userId}:`, error);
+    return { success: false, error: 'No se pudo eliminar el usuario por completo.' };
+  }
+}

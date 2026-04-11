@@ -44,7 +44,7 @@ export default function AdminDashboardPage() {
             <DashboardCard title="Turnos" description="Gestionar todas las citas" href="/admin/turnos" />
             <DashboardCard title="Clientes" description="Ver y administrar clientes" href="/admin/clientes" />
             <DashboardCard title="Servicios" description="Configurar los servicios ofrecidos" href="/admin/servicios" />
-            <DashboardCard title="Empleados" description="Alta o baja de empleados" href="/admin/empleados" />
+            <DashboardCard title="Empleados" description="Gestión de roles de usuarios" href="/admin/empleados" />
         </div>
 
         <div className="mt-10 bg-white rounded-lg shadow-md p-6">
