@@ -292,8 +292,6 @@ export async function agregarMascota(userId, mascotaData) {
 export async function actualizarPerfil(userId, userData) {
   const firestore = admin.firestore();
   const { 
-    nombre,
-    apellido,
     telefonoPrincipal, 
     telefonoSecundario, 
     direccion, 
@@ -305,8 +303,6 @@ export async function actualizarPerfil(userId, userData) {
   } = userData;
   
   const datosActualizables = {
-    nombre,
-    apellido,
     telefonoPrincipal,
     telefonoSecundario: telefonoSecundario || '',
     direccion,
@@ -318,14 +314,11 @@ export async function actualizarPerfil(userId, userData) {
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
   };
 
-  if (!userId || !nombre || !apellido || !telefonoPrincipal || !direccion || !nombreContactoEmergencia || !telefonoContactoEmergencia) {
+  if (!userId || !telefonoPrincipal || !direccion || !nombreContactoEmergencia || !telefonoContactoEmergencia) {
     return { success: false, error: 'Faltan datos esenciales para actualizar.' };
   }
 
   try {
-    await admin.auth().updateUser(userId, {
-      displayName: `${nombre} ${apellido}`
-    });
     await firestore.collection('users').doc(userId).update(datosActualizables);
     revalidatePath('/mis-datos');
     return { success: true, message: '¡Perfil actualizado con éxito!', updatedData: datosActualizables };

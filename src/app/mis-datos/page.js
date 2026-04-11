@@ -9,9 +9,7 @@ import SubHeader from '@/app/components/SubHeader';
 import { FaUser, FaIdCard, FaPhone, FaMapMarkerAlt, FaExclamationTriangle, FaSave, FaEdit, FaTimes, FaKey } from 'react-icons/fa';
 import Link from 'next/link';
 import { FaUserShield , FaChevronRight } from 'react-icons/fa';
-import { BARRIOS_SANTA_ROSA, CIUDAD_FIJA, PROVINCIA_FIJA, construirDireccion } from '@/lib/utils/direccion';
-
-const BARRIO_OTRO_VALUE = '__OTRO_BARRIO__';
+import { CIUDAD_FIJA, PROVINCIA_FIJA, construirDireccion } from '@/lib/utils/direccion';
 // Componente para un campo de información, ahora con una prop `isEditable`
 const InfoField = ({ label, value, icon, name, isEditing, onChange, isEditable = true }) => {
     const Icon = icon;
@@ -93,8 +91,6 @@ export default function MisDatosPage() {
     const [formData, setFormData] = useState({});
     const [notification, setNotification] = useState({ message: '', type: '' });
     const [isPasswordProvider, setIsPasswordProvider] = useState(false);
-    const [barrioSeleccionado, setBarrioSeleccionado] = useState('');
-    const mostrarCampoBarrioManual = barrioSeleccionado === BARRIO_OTRO_VALUE;
 
     useEffect(() => {
         if (user) {
@@ -112,10 +108,6 @@ export default function MisDatosPage() {
                         const data = docSnap.data();
                         setUserData(data);
                         setFormData(data);
-                        if (data.barrio) {
-                            const esBarrioConocido = BARRIOS_SANTA_ROSA.includes(data.barrio);
-                            setBarrioSeleccionado(esBarrioConocido ? data.barrio : BARRIO_OTRO_VALUE);
-                        }
                     } else {
                         setNotification({ message: 'No se pudieron cargar tus datos.', type: 'error' });
                     }
@@ -131,27 +123,13 @@ export default function MisDatosPage() {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        if ((name === 'dni' || name.includes('telefono') || name === 'altura') && value && !/^[0-9]*$/.test(value)) return;
+        if ((name === 'dni' || name.includes('telefono')) && value && !/^[0-9]*$/.test(value)) return;
         setFormData(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleBarrioChange = (e) => {
-        const { value } = e.target;
-        setBarrioSeleccionado(value);
-
-        if (value === BARRIO_OTRO_VALUE) {
-            setFormData(prev => ({ ...prev, barrio: '' }));
-            return;
-        }
-
-        setFormData(prev => ({ ...prev, barrio: value }));
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setNotification({ message: '', type: '' });
-        if (!window.confirm('¿Confirmás que querés guardar los cambios de tu información personal?')) return;
-
         const result = await actualizarPerfil(user.uid, {
             ...formData,
             direccion: construirDireccion(formData),
@@ -210,18 +188,9 @@ export default function MisDatosPage() {
                             ) : (
                                 <div className="space-x-2">
                                     <button type="submit" className="flex items-center bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition">
-                                    <FaSave className="mr-2" /> Guardar
+                                        <FaSave className="mr-2" /> Guardar
                                     </button>
-                                    <button type="button" onClick={() => {
-                                        setIsEditing(false);
-                                        setFormData(userData);
-                                        if (userData?.barrio) {
-                                            const esBarrioConocido = BARRIOS_SANTA_ROSA.includes(userData.barrio);
-                                            setBarrioSeleccionado(esBarrioConocido ? userData.barrio : BARRIO_OTRO_VALUE);
-                                        } else {
-                                            setBarrioSeleccionado('');
-                                        }
-                                    }} className="flex items-center bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition">
+                                    <button type="button" onClick={() => { setIsEditing(false); setFormData(userData); }} className="flex items-center bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition">
                                         <FaTimes className="mr-2" /> Cancelar
                                     </button>
                                 </div>
@@ -229,48 +198,12 @@ export default function MisDatosPage() {
                         </div>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
-                            <InfoField label="Nombre" value={formData.nombre} icon={FaUser} name="nombre" isEditing={isEditing} onChange={handleInputChange} />
-                            <InfoField label="Apellido" value={formData.apellido} icon={FaUser} name="apellido" isEditing={isEditing} onChange={handleInputChange} />
+                            <InfoField label="Nombre" value={formData.nombre} icon={FaUser} name="nombre" isEditing={isEditing} onChange={handleInputChange} isEditable={false} />
+                            <InfoField label="Apellido" value={formData.apellido} icon={FaUser} name="apellido" isEditing={isEditing} onChange={handleInputChange} isEditable={false} />
                             <InfoField label="DNI" value={formData.dni} icon={FaIdCard} name="dni" isEditing={isEditing} onChange={handleInputChange} isEditable={false} />
                             <InfoField label="Email registrado" value={formData.email || user?.email} icon={FaUser} name="email" isEditing={false} onChange={handleInputChange} isEditable={false} />
+                            <InfoField label="Domicilio" value={formData.direccion || construirDireccion(formData)} icon={FaMapMarkerAlt} name="direccion" isEditing={false} onChange={handleInputChange} isEditable={false} />
                         </div>
-                        <div className="mb-4 mt-2">
-                            <label className="block text-xs font-semibold text-gray-500 mb-1">Provincia y Ciudad</label>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <input value={formData.provincia || PROVINCIA_FIJA} disabled className="w-full p-3 bg-gray-100 border border-gray-200 rounded-lg text-gray-600" />
-                                <input value={formData.ciudad || CIUDAD_FIJA} disabled className="w-full p-3 bg-gray-100 border border-gray-200 rounded-lg text-gray-600" />
-                            </div>
-                        </div>
-                        <div className="mb-4">
-                            <label className="block text-xs font-semibold text-gray-500 mb-1">Barrio</label>
-                            {isEditing ? (
-                                <>
-                                    <select name="barrioSeleccionado" value={barrioSeleccionado} onChange={handleBarrioChange} className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                                        <option value="">Elegí un barrio de Santa Rosa</option>
-                                        {BARRIOS_SANTA_ROSA.map((barrio) => (
-                                            <option key={barrio} value={barrio}>{barrio}</option>
-                                        ))}
-                                        <option value={BARRIO_OTRO_VALUE}>Otros</option>
-                                    </select>
-                                    {mostrarCampoBarrioManual && (
-                                        <input
-                                            name="barrio"
-                                            placeholder="Ingresá tu barrio"
-                                            value={formData.barrio || ''}
-                                            onChange={handleInputChange}
-                                            className="w-full mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg"
-                                        />
-                                    )}
-                                </>
-                            ) : (
-                                <p className="text-lg text-gray-800 bg-gray-50 p-3 rounded-lg">{formData.barrio || 'No especificado'}</p>
-                            )}
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
-                            <InfoField label="Calle" value={formData.calle} icon={FaMapMarkerAlt} name="calle" isEditing={isEditing} onChange={handleInputChange} />
-                            <InfoField label="Altura" value={formData.altura} icon={FaMapMarkerAlt} name="altura" isEditing={isEditing} onChange={handleInputChange} />
-                        </div>
-                        <InfoField label="Domicilio completo" value={formData.direccion || construirDireccion(formData)} icon={FaMapMarkerAlt} name="direccion" isEditing={false} onChange={handleInputChange} isEditable={false} />
                     </div>
 
                     <div className="bg-white shadow-xl rounded-2xl p-6">
