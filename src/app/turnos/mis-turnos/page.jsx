@@ -82,6 +82,15 @@ const TurnoCard = ({ turno, compactarCancelado = false }) => {
                 </div>
             )}
 
+            {estaCancelado && (!compactarCancelado || mostrarDetalleCancelado) && (
+                <div className="mt-4 p-3 rounded-lg border border-red-100 bg-red-50">
+                    <p className="text-xs uppercase tracking-wide text-red-700 font-bold mb-1">Motivo de cancelación</p>
+                    <p className="text-sm text-red-900">
+                        {turno.motivoCancelacion?.trim() || 'La veterinaria canceló este turno. Podés sacar uno nuevo según disponibilidad.'}
+                    </p>
+                </div>
+            )}
+
             {necesitaReprogramacion && (
                 <div className="mt-4 pt-4 border-t border-gray-200 text-center">
                     <p className="text-sm text-orange-700 mb-3">Este turno necesita ser reprogramado.</p>

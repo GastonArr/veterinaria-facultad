@@ -4,7 +4,7 @@ import { FaCheck, FaTimes, FaDog, FaCat, FaFileMedical } from 'react-icons/fa';
 import Link from 'next/link';
 import { FaCalendarAlt } from 'react-icons/fa';
 
-export default function TurnosTable({ turnos, onUpdate, isUpdating, currentView, onDocumentar }) {
+export default function TurnosTable({ turnos, onUpdate, isUpdating, currentView, onDocumentar, onRequestCancel }) {
   const statusStyles = {
     pendiente: 'bg-yellow-200 text-yellow-800',
     confirmado: 'bg-blue-200 text-blue-800',
@@ -22,6 +22,14 @@ export default function TurnosTable({ turnos, onUpdate, isUpdating, currentView,
 
   const handleAction = (turno, newStatus) => {
     onUpdate(turno.userId, turno.mascotaId, turno.id, newStatus);
+  };
+
+  const handleCancelAction = (turno) => {
+    if (typeof onRequestCancel === 'function') {
+      onRequestCancel(turno);
+      return;
+    }
+    handleAction(turno, 'cancelado');
   };
 
   const formattedDate = (fecha) => {
@@ -92,7 +100,7 @@ export default function TurnosTable({ turnos, onUpdate, isUpdating, currentView,
                         </button>
                       )}
                       {currentView !== 'finalizados' && turno.estado !== 'cancelado' && (
-                        <button onClick={() => handleAction(turno, 'cancelado')} className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors" title="Cancelar">
+                        <button onClick={() => handleCancelAction(turno)} className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors" title="Cancelar">
                           <FaTimes />
                         </button>
                       )}

@@ -8,11 +8,12 @@ import { obtenerServicios } from '@/lib/actions/servicios.actions.js';
 import TurnosTable from './TurnosTable';
 import FilterInput from './FilterInput';
 import DocumentarTurnoModal from './DocumentarTurnoModal';
+import CancelarTurnoModal from './CancelarTurnoModal';
 
 const IconoClinica = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>;
 const IconoPeluqueria = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-pink-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.121 14.121a3 3 0 10-4.242 0M12 18.5V19m0-16v.5m-5.071 2.929l.354.354M17.425 5.575l-.354.354M4 12H3.5m17 0h-.5" /></svg>;
 
-function TurnoCard({ turno, onUpdate, isUpdating, currentView, onDocumentar }) {
+function TurnoCard({ turno, onUpdate, isUpdating, currentView, onDocumentar, onRequestCancel }) {
   const statusStyles = {
     pendiente: 'bg-yellow-200 text-yellow-800',
     confirmado: 'bg-blue-200 text-blue-800',
@@ -57,7 +58,14 @@ function TurnoCard({ turno, onUpdate, isUpdating, currentView, onDocumentar }) {
             <>
               {currentView === 'proximos' && turno.estado === 'pendiente' && (<button onClick={() => handleAction('confirmado')} className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition-colors">Confirmar</button>)}
               {currentView === 'hoy' && turno.estado === 'confirmado' && (<button onClick={() => handleAction('finalizado')} className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">Finalizar</button>)}
-              {currentView !== 'finalizados' && turno.estado !== 'cancelado' && (<button onClick={() => handleAction('cancelado')} className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors">Cancelar</button>)}
+              {currentView !== 'finalizados' && turno.estado !== 'cancelado' && (
+                <button
+                  onClick={() => (onRequestCancel ? onRequestCancel(turno) : handleAction('cancelado'))}
+                  className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                >
+                  Cancelar
+                </button>
+              )}
               {currentView === 'reprogramar' && turno.estado === 'reprogramar' && (
                 <Link href={`/turnos/reprogramar?turnoId=${turno.id}&userId=${turno.userId}&mascotaId=${turno.mascotaId}`} className="px-3 py-1 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors inline-flex items-center">
                   <FaCalendarAlt className="mr-1" />
@@ -82,6 +90,7 @@ export default function AdminTurnosDashboard() {
   const [isUpdating, startTransition] = useTransition();
   const [medicamentosCatalog, setMedicamentosCatalog] = useState({});
   const [modalTurno, setModalTurno] = useState(null);
+  const [turnoACancelar, setTurnoACancelar] = useState(null);
 
   const cargarTurnos = async () => {
     setError(null);
@@ -111,6 +120,35 @@ export default function AdminTurnosDashboard() {
       const result = await updateTurnoStatus({ userId, mascotaId, turnoId, newStatus });
       if (result.success) await cargarTurnos();
       else setError(result.error);
+    });
+  };
+
+  const handleRequestCancel = (turno) => {
+    if (vistaActual === 'proximos') {
+      setTurnoACancelar(turno);
+      return;
+    }
+    handleUpdateStatus(turno.userId, turno.mascotaId, turno.id, 'cancelado');
+  };
+
+  const handleConfirmCancel = async (motivoCancelacion) => {
+    if (!turnoACancelar) return;
+
+    startTransition(async () => {
+      const result = await updateTurnoStatus({
+        userId: turnoACancelar.userId,
+        mascotaId: turnoACancelar.mascotaId,
+        turnoId: turnoACancelar.id,
+        newStatus: 'cancelado',
+        cancelReason: motivoCancelacion,
+      });
+
+      if (result.success) {
+        setTurnoACancelar(null);
+        await cargarTurnos();
+      } else {
+        setError(result.error);
+      }
     });
   };
 
@@ -175,13 +213,13 @@ export default function AdminTurnosDashboard() {
 
           {/* Vista Escritorio (Tabla) */}
           <div className="md:block ">
-            <TurnosTable turnos={turnosClinica} onUpdate={handleUpdateStatus} isUpdating={isUpdating} currentView={vistaActual} onDocumentar={setModalTurno} />
+            <TurnosTable turnos={turnosClinica} onUpdate={handleUpdateStatus} isUpdating={isUpdating} currentView={vistaActual} onDocumentar={setModalTurno} onRequestCancel={handleRequestCancel} />
           </div>
 
           {/* Vista Móvil (Tarjetas) */}
           <div className="md:hidden">
             {turnosClinica.map(turno => (
-              <TurnoCard key={turno.id} turno={turno} onUpdate={handleUpdateStatus} isUpdating={isUpdating} currentView={vistaActual} onDocumentar={setModalTurno} />
+              <TurnoCard key={turno.id} turno={turno} onUpdate={handleUpdateStatus} isUpdating={isUpdating} currentView={vistaActual} onDocumentar={setModalTurno} onRequestCancel={handleRequestCancel} />
             ))}
             {!turnosClinica.length && (
               <p className="text-center text-gray-500 mt-4">No hay turnos para mostrar.</p>
@@ -198,13 +236,13 @@ export default function AdminTurnosDashboard() {
 
           {/* Vista Escritorio (Tabla) */}
           <div className="md:block">
-            <TurnosTable turnos={turnosPeluqueria} onUpdate={handleUpdateStatus} isUpdating={isUpdating} currentView={vistaActual} onDocumentar={setModalTurno} />
+            <TurnosTable turnos={turnosPeluqueria} onUpdate={handleUpdateStatus} isUpdating={isUpdating} currentView={vistaActual} onDocumentar={setModalTurno} onRequestCancel={handleRequestCancel} />
           </div>
 
           {/* Vista Móvil (Tarjetas) */}
           <div className="md:hidden">
             {turnosPeluqueria.map(turno => (
-              <TurnoCard key={turno.id} turno={turno} onUpdate={handleUpdateStatus} isUpdating={isUpdating} currentView={vistaActual} onDocumentar={setModalTurno} />
+              <TurnoCard key={turno.id} turno={turno} onUpdate={handleUpdateStatus} isUpdating={isUpdating} currentView={vistaActual} onDocumentar={setModalTurno} onRequestCancel={handleRequestCancel} />
             ))}
             {!turnosPeluqueria.length && (
               <p className="text-center text-gray-500 mt-4">No hay turnos para mostrar.</p>
@@ -221,6 +259,14 @@ export default function AdminTurnosDashboard() {
         }}
         turno={modalTurno}
         medicamentosCatalog={medicamentosCatalog}
+      />
+
+      <CancelarTurnoModal
+        isOpen={!!turnoACancelar}
+        turno={turnoACancelar}
+        onClose={() => setTurnoACancelar(null)}
+        onConfirm={handleConfirmCancel}
+        isSubmitting={isUpdating}
       />
     </div>
   );

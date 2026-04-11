@@ -89,6 +89,7 @@ export async function getTurnsForAdminDashboard() {
         estado: turnoData.estado,
         necesitaTraslado: turnoData.necesitaTraslado || false,
         fecha: toISOStringOrNull(turnoData.fecha),
+        motivoCancelacion: turnoData.motivoCancelacion || '',
         comentario: turnoData.comentario || '',
         medicamentosSuministrados: turnoData.medicamentosSuministrados || [],
         user: serializableUser,
@@ -162,7 +163,7 @@ export async function getTurnsForAdminDashboard() {
 }
 
 
-export async function updateTurnoStatus({ userId, mascotaId, turnoId, newStatus, newDate }) {
+export async function updateTurnoStatus({ userId, mascotaId, turnoId, newStatus, newDate, cancelReason }) {
   try {
     if (!userId || !mascotaId || !turnoId || !newStatus) {
       throw new Error("Faltan parámetros requeridos.");
@@ -178,12 +179,19 @@ export async function updateTurnoStatus({ userId, mascotaId, turnoId, newStatus,
       updateData.fecha = admin.firestore.Timestamp.fromDate(new Date(newDate));
     }
 
+    if (newStatus === 'cancelado') {
+      updateData.motivoCancelacion = (cancelReason || '').trim();
+    } else {
+      updateData.motivoCancelacion = '';
+    }
+
     await turnoRef.update(updateData);
     
     // Revalidar las rutas afectadas para que Next.js actualice la caché.
     revalidatePath('/admin/turnos');
     revalidatePath('/admin/empleados/transporte');
     revalidatePath('/admin/empleados/peluqueria');
+    revalidatePath('/turnos/mis-turnos');
     
     return { success: true, message: `Turno actualizado.` };
 
@@ -217,4 +225,3 @@ export async function documentarTurno({ userId, mascotaId, turnoId, comentario, 
     return { success: false, error: `Error al documentar el turno: ${error.message}` };
   }
 }
-
