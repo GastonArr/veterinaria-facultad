@@ -10,8 +10,6 @@ import PasswordStrengthMeter from '@/app/components/PasswordStrengthMeter';
 import { BARRIOS_SANTA_ROSA, CIUDAD_FIJA, PROVINCIA_FIJA, construirDireccion } from '@/lib/utils/direccion';
 import { getPasswordValidation } from '@/lib/utils/passwordValidation';
 
-const BARRIO_OTRO_VALUE = '__OTRO_BARRIO__';
-
 export default function LoginPage() {
     const { user, loginWithGoogle, loginWithEmail, signInWithToken } = useAuth();
     const router = useRouter();
@@ -33,11 +31,7 @@ export default function LoginPage() {
         direccion: '',
         nombreContactoEmergencia: '', telefonoContactoEmergencia: ''
     });
-    const barrioEsPredefinido = BARRIOS_SANTA_ROSA.includes(formData.barrio);
-    const barrioSeleccionado = barrioEsPredefinido
-        ? formData.barrio
-        : (formData.barrio ? BARRIO_OTRO_VALUE : '');
-    const mostrarCampoBarrioManual = barrioSeleccionado === BARRIO_OTRO_VALUE;
+    const [mostrarBarrios, setMostrarBarrios] = useState(false);
 
     useEffect(() => {
         if (user) {
@@ -101,15 +95,6 @@ export default function LoginPage() {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleBarrioChange = (e) => {
-        const { value } = e.target;
-        if (value === BARRIO_OTRO_VALUE) {
-            setFormData(prev => ({ ...prev, barrio: '' }));
-            return;
-        }
-        setFormData(prev => ({ ...prev, barrio: value }));
-    };
-
     return (
         <div className="min-h-screen bg-white flex flex-col justify-center items-center p-4">
             <div className="w-full max-w-sm mx-auto">
@@ -168,22 +153,20 @@ export default function LoginPage() {
                                     <input value={formData.provincia} disabled className="w-full p-3 bg-gray-100 border border-gray-200 rounded-lg text-gray-600"/>
                                     <input value={formData.ciudad} disabled className="w-full p-3 bg-gray-100 border border-gray-200 rounded-lg text-gray-600"/>
                                 </div>
-                                <select name="barrioSeleccionado" value={barrioSeleccionado} onChange={handleBarrioChange} required className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                                    <option value="">Elegí un barrio de Santa Rosa</option>
-                                    {BARRIOS_SANTA_ROSA.map((barrio) => (
-                                        <option key={barrio} value={barrio}>{barrio}</option>
-                                    ))}
-                                    <option value={BARRIO_OTRO_VALUE}>Otros</option>
-                                </select>
-                                {mostrarCampoBarrioManual && (
-                                    <input
-                                        name="barrio"
-                                        placeholder="Ingresá tu barrio"
-                                        value={barrioEsPredefinido ? '' : formData.barrio}
-                                        onChange={handleInputChange}
-                                        required
-                                        className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg"
-                                    />
+                                <button
+                                    type="button"
+                                    onClick={() => setMostrarBarrios(!mostrarBarrios)}
+                                    className="w-full p-3 bg-violet-50 border border-violet-200 rounded-lg text-violet-700 font-semibold hover:bg-violet-100 transition-colors"
+                                >
+                                    {mostrarBarrios ? 'Ocultar barrios' : 'Seleccionar barrio'}
+                                </button>
+                                {mostrarBarrios && (
+                                    <select name="barrio" value={formData.barrio} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                                        <option value="">Elegí un barrio de Santa Rosa</option>
+                                        {BARRIOS_SANTA_ROSA.map((barrio) => (
+                                            <option key={barrio} value={barrio}>{barrio}</option>
+                                        ))}
+                                    </select>
                                 )}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <input name="calle" placeholder="Calle" value={formData.calle} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg"/>
