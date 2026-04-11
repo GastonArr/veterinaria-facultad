@@ -3,82 +3,64 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Admin estricto (para acciones sensibles de escritura global).
+    // Helper function to check for admin role via custom claims
     function isAdmin() {
-      return request.auth != null && (
-        request.auth.token.admin == true ||
-        request.auth.token.role == 'admin' ||
-        (
-          exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
-        )
-      );
-    }
-
-    // Roles internos con acceso al panel (admin + empleados operativos).
-    function isStaff() {
-      return request.auth != null && (
-        request.auth.token.role == 'admin' ||
-        request.auth.token.role == 'peluqueria' ||
-        request.auth.token.role == 'transporte' ||
-        (
-          exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-          (
-            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'peluqueria' ||
-            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'transporte'
-          )
-        )
-      );
+      return request.auth != null && request.auth.token.admin == true;
     }
 
     // --- USER DATA ---
     match /users/{userId} {
-      // Staff puede leer fichas para operar, pero solo dueño/admin pueden modificar usuario.
-      allow read: if request.auth.uid == userId || isStaff();
-      allow update: if request.auth.uid == userId || isAdmin();
+      allow read, update: if request.auth.uid == userId || isAdmin();
       allow create: if request.auth != null;
 
       // Subcollection: MASCOTAS
+      // Users can manage their own pets. Admins can manage any pet.
       match /mascotas/{mascotaId} {
-        // Staff puede consultar fichas clínicas; escritura solo dueño/admin.
-        allow get, list: if request.auth.uid == userId || isStaff();
-        allow create, update, delete: if request.auth.uid == userId || isAdmin();
+        allow get, list, write: if request.auth.uid == userId || isAdmin();
 
+        // -- NEW NESTED STRUCTURE --
+        // A user can manage the appointments for their own pet.
         match /turnos/{turnoId} {
-          allow read: if request.auth.uid == userId || isStaff();
-          allow write: if request.auth.uid == userId || isAdmin();
+          allow read, write: if request.auth.uid == userId || isAdmin();
 
+          // A user can manage the medical records for an appointment.
           match /medicamentos/{medicamentoId} {
-            allow read: if request.auth.uid == userId || isStaff();
-            allow write: if request.auth.uid == userId || isAdmin();
+            allow read, write: if request.auth.uid == userId || isAdmin();
           }
         }
 
+        // Subcollection for manual carnet entries
         match /carnetSanitario/{entryId} {
-          allow read: if request.auth.uid == userId || isStaff();
-          allow write: if request.auth.uid == userId || isAdmin();
+          allow read, write: if request.auth.uid == userId || isAdmin();
         }
       }
     }
 
     // --- GLOBAL COLLECTIONS ---
 
+    // SERVICIOS
+    // Anyone can read services. Only admins can modify them.
     match /servicios/{servicioId} {
       allow read: if true;
       allow write: if isAdmin();
     }
-
+    
+    // PRODUCTOS (for Store)
+    // Anyone can read products. Only admins can modify them.
     match /productos/{productoId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
+    // TURNOS PELUQUERIA (for Availability)
+    // Anyone can read availability. Only authenticated users can update it (via server action).
     match /turnos_peluqueria/{fecha} {
         allow read: if true;
         allow write: if request.auth != null;
     }
 
+    // CONFIGURACION (Días no laborales, etc.)
+    // Cualquiera puede leer la configuración de la app. Solo los admins pueden modificarla.
     match /configuracion/{docId} {
       allow read: if true;
       allow write: if isAdmin();
