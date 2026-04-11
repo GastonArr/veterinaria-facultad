@@ -11,8 +11,6 @@ import { db } from '@/lib/firebase';
 import { FaUser, FaIdCard, FaPhone, FaMapMarkerAlt, FaExclamationTriangle } from 'react-icons/fa';
 import { BARRIOS_SANTA_ROSA, CIUDAD_FIJA, PROVINCIA_FIJA, construirDireccion } from '@/lib/utils/direccion';
 
-const BARRIO_OTRO_VALUE = '__OTRO_BARRIO__';
-
 const FormInput = ({ id, name, type, placeholder, value, onChange, required = false, maxLength, label, icon: Icon, error }) => (
     <div className="mb-4">
         <label className="block text-xs font-semibold text-gray-500 mb-1" htmlFor={id}>{label}</label>
@@ -46,11 +44,7 @@ export default function CompletarPerfilPage() {
     nombreContactoEmergencia: '', telefonoContactoEmergencia: ''
   });
   const [errors, setErrors] = useState({});
-  const barrioEsPredefinido = BARRIOS_SANTA_ROSA.includes(formData.barrio);
-  const barrioSeleccionado = barrioEsPredefinido
-    ? formData.barrio
-    : (formData.barrio ? BARRIO_OTRO_VALUE : '');
-  const mostrarCampoBarrioManual = barrioSeleccionado === BARRIO_OTRO_VALUE;
+  const [mostrarBarrios, setMostrarBarrios] = useState(false);
 
   const validacionDatosCompletarPerfil = (data) => {
     const errors = {};
@@ -110,22 +104,6 @@ export default function CompletarPerfilPage() {
     
     if (errors[name]) {
         setErrors(prevErrors => ({ ...prevErrors, [name]: null }));
-    }
-  };
-
-  const handleBarrioChange = (e) => {
-    const { value } = e.target;
-    if (value === BARRIO_OTRO_VALUE) {
-      setFormData(prev => ({ ...prev, barrio: '' }));
-      if (errors.barrio) {
-        setErrors(prevErrors => ({ ...prevErrors, barrio: null }));
-      }
-      return;
-    }
-
-    setFormData(prev => ({ ...prev, barrio: value }));
-    if (errors.barrio) {
-      setErrors(prevErrors => ({ ...prevErrors, barrio: null }));
     }
   };
 
@@ -189,22 +167,20 @@ export default function CompletarPerfilPage() {
                     </div>
                     <div className="mb-4">
                         <label className="block text-xs font-semibold text-gray-500 mb-1">Barrio</label>
-                        <select name="barrioSeleccionado" value={barrioSeleccionado} onChange={handleBarrioChange} className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg" required>
-                            <option value="">Elegí un barrio de Santa Rosa</option>
-                            {BARRIOS_SANTA_ROSA.map((barrio) => (
-                                <option key={barrio} value={barrio}>{barrio}</option>
-                            ))}
-                            <option value={BARRIO_OTRO_VALUE}>Otros</option>
-                        </select>
-                        {mostrarCampoBarrioManual && (
-                            <input
-                                name="barrio"
-                                placeholder="Ingresá tu barrio"
-                                value={barrioEsPredefinido ? '' : formData.barrio}
-                                onChange={handleChange}
-                                className="w-full mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg"
-                                required
-                            />
+                        <button
+                            type="button"
+                            onClick={() => setMostrarBarrios(!mostrarBarrios)}
+                            className="w-full mb-2 p-3 bg-violet-50 border border-violet-200 rounded-lg text-violet-700 font-semibold hover:bg-violet-100 transition-colors"
+                        >
+                            {mostrarBarrios ? 'Ocultar barrios' : 'Seleccionar barrio'}
+                        </button>
+                        {mostrarBarrios && (
+                            <select name="barrio" value={formData.barrio} onChange={handleChange} className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg" required>
+                                <option value="">Elegí un barrio de Santa Rosa</option>
+                                {BARRIOS_SANTA_ROSA.map((barrio) => (
+                                    <option key={barrio} value={barrio}>{barrio}</option>
+                                ))}
+                            </select>
                         )}
                         {errors.barrio && <p className="text-red-600 text-xs mt-1">{errors.barrio}</p>}
                     </div>
