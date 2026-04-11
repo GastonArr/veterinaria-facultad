@@ -8,9 +8,11 @@ import { actualizarPerfil } from '@/lib/actions/user.actions.js';
 import SubHeader from '@/app/components/SubHeader';
 import { FaUser, FaIdCard, FaPhone, FaMapMarkerAlt, FaExclamationTriangle, FaSave, FaEdit, FaTimes, FaKey } from 'react-icons/fa';
 import Link from 'next/link';
-import { FaUserShield , FaChevronRight } from 'react-icons/fa';
-import { CIUDAD_FIJA, PROVINCIA_FIJA, construirDireccion } from '@/lib/utils/direccion';
-// Componente para un campo de información, ahora con una prop `isEditable`
+import { FaUserShield, FaChevronRight } from 'react-icons/fa';
+import { BARRIOS_SANTA_ROSA, CIUDAD_FIJA, PROVINCIA_FIJA, construirDireccion } from '@/lib/utils/direccion';
+
+const BARRIO_OTRO_VALUE = '__OTRO_BARRIO__';
+
 const InfoField = ({ label, value, icon, name, isEditing, onChange, isEditable = true }) => {
     const Icon = icon;
     const canEdit = isEditing && isEditable;
@@ -22,9 +24,9 @@ const InfoField = ({ label, value, icon, name, isEditing, onChange, isEditable =
                 <label className="block text-xs font-semibold text-gray-500 mb-1">{label}</label>
                 {canEdit ? (
                     <input
-                        type={name.includes('telefono') || name === 'dni' ? 'tel' : 'text'}
+                        type={name.includes('telefono') || name === 'dni' || name === 'altura' ? 'tel' : 'text'}
                         name={name}
-                        value={value}
+                        value={value || ''}
                         onChange={onChange}
                         className="w-full text-lg text-gray-800 bg-white border-b-2 border-blue-300 focus:outline-none focus:border-blue-500 transition"
                         maxLength={name === 'dni' ? 8 : undefined}
@@ -36,45 +38,42 @@ const InfoField = ({ label, value, icon, name, isEditing, onChange, isEditable =
         </div>
     );
 };
+
 const RoleSpecificButton = ({ role }) => {
     const roles = {
-      admin: { href: '/admin', label: 'Panel de Administrador' },
-      peluqueria: { href: '/admin/empleados/peluqueria', label: 'Portal de Peluquería' },
-      transporte: { href: '/admin/empleados/transporte', label: 'Portal de Transporte' }
+        admin: { href: '/admin', label: 'Panel de Administrador' },
+        peluqueria: { href: '/admin/empleados/peluqueria', label: 'Portal de Peluquería' },
+        transporte: { href: '/admin/empleados/transporte', label: 'Portal de Transporte' }
     };
-  
+
     if (!role || !roles[role]) {
-      return null; // No se muestra nada si el rol no es válido o no existe
+        return null;
     }
-  
+
     const { href, label } = roles[role];
-  
+
     return (
         <div className="mb-8">
-          <Link 
-            href={href} 
-            className="flex items-center justify-between w-full p-4 text-left bg-white rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 group"
-          >
-            <div className="flex items-center gap-4">
-              {/* Icono destacado */}
-              <div className="p-3 bg-violet-100 rounded-xl">
-                <FaUserShield className="text-violet-600" size={22} />
-              </div>
-              {/* Etiqueta del rol */}
-              <span className="text-lg font-bold text-gray-800">{label}</span>
-            </div>
-            {/* Flecha indicadora */}
-            <FaChevronRight className="text-gray-400 group-hover:text-violet-600 transition-colors" size={20} />
-          </Link>
+            <Link
+                href={href}
+                className="flex items-center justify-between w-full p-4 text-left bg-white rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 group"
+            >
+                <div className="flex items-center gap-4">
+                    <div className="p-3 bg-violet-100 rounded-xl">
+                        <FaUserShield className="text-violet-600" size={22} />
+                    </div>
+                    <span className="text-lg font-bold text-gray-800">{label}</span>
+                </div>
+                <FaChevronRight className="text-gray-400 group-hover:text-violet-600 transition-colors" size={20} />
+            </Link>
         </div>
     );
-   
-  };
-// Componente para mostrar notificaciones
+};
+
 const Notification = ({ message, type, onClose }) => {
     if (!message) return null;
-    const baseClasses = "p-4 rounded-lg flex justify-between items-center mb-4 shadow-lg";
-    const typeClasses = type === 'success' ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
+    const baseClasses = 'p-4 rounded-lg flex justify-between items-center mb-4 shadow-lg';
+    const typeClasses = type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
     return (
         <div className={`${baseClasses} ${typeClasses}`}>
             <span>{message}</span>
@@ -83,68 +82,138 @@ const Notification = ({ message, type, onClose }) => {
     );
 };
 
+const buildEditableFormData = (data = {}) => ({
+    nombre: data.nombre || '',
+    apellido: data.apellido || '',
+    dni: data.dni || '',
+    email: data.email || '',
+    telefonoPrincipal: data.telefonoPrincipal || '',
+    telefonoSecundario: data.telefonoSecundario || '',
+    provincia: data.provincia || PROVINCIA_FIJA,
+    ciudad: data.ciudad || CIUDAD_FIJA,
+    barrio: data.barrio || '',
+    calle: data.calle || '',
+    altura: data.altura || '',
+    direccion: data.direccion || '',
+    nombreContactoEmergencia: data.nombreContactoEmergencia || '',
+    telefonoContactoEmergencia: data.telefonoContactoEmergencia || '',
+});
+
 export default function MisDatosPage() {
     const { user, resetPassword } = useAuth();
     const [userData, setUserData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
-    const [formData, setFormData] = useState({});
+    const [isSaving, setIsSaving] = useState(false);
+    const [formData, setFormData] = useState(buildEditableFormData());
     const [notification, setNotification] = useState({ message: '', type: '' });
     const [isPasswordProvider, setIsPasswordProvider] = useState(false);
+    const [barrioSeleccionado, setBarrioSeleccionado] = useState('');
+    const mostrarCampoBarrioManual = barrioSeleccionado === BARRIO_OTRO_VALUE;
 
     useEffect(() => {
-        if (user) {
-            // Check the provider
-            if (user.providerData && user.providerData.length > 0) {
-                const provider = user.providerData[0].providerId;
-                setIsPasswordProvider(provider === 'password');
-            }
+        if (!user) return;
 
-            const fetchUserData = async () => {
-                try {
-                    const docRef = doc(db, 'users', user.uid);
-                    const docSnap = await getDoc(docRef);
-                    if (docSnap.exists()) {
-                        const data = docSnap.data();
-                        setUserData(data);
-                        setFormData(data);
-                    } else {
-                        setNotification({ message: 'No se pudieron cargar tus datos.', type: 'error' });
-                    }
-                } catch (error) {
-                    setNotification({ message: 'Error al conectar con la base de datos.', type: 'error' });
-                } finally {
-                    setLoading(false);
-                }
-            };
-            fetchUserData();
+        if (user.providerData && user.providerData.length > 0) {
+            const provider = user.providerData[0].providerId;
+            setIsPasswordProvider(provider === 'password');
         }
+
+        const fetchUserData = async () => {
+            try {
+                const docRef = doc(db, 'users', user.uid);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    setUserData(data);
+                    setFormData(buildEditableFormData(data));
+
+                    if (data.barrio) {
+                        const esBarrioConocido = BARRIOS_SANTA_ROSA.includes(data.barrio);
+                        setBarrioSeleccionado(esBarrioConocido ? data.barrio : BARRIO_OTRO_VALUE);
+                    }
+                } else {
+                    setNotification({ message: 'No se pudieron cargar tus datos.', type: 'error' });
+                }
+            } catch (error) {
+                setNotification({ message: 'Error al conectar con la base de datos.', type: 'error' });
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchUserData();
     }, [user]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        if ((name === 'dni' || name.includes('telefono')) && value && !/^[0-9]*$/.test(value)) return;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        if ((name === 'dni' || name.includes('telefono') || name === 'altura') && value && !/^[0-9]*$/.test(value)) return;
+        setFormData((prev) => ({ ...prev, [name]: value }));
+    };
+
+    const handleBarrioChange = (e) => {
+        const { value } = e.target;
+        setBarrioSeleccionado(value);
+
+        if (value === BARRIO_OTRO_VALUE) {
+            setFormData((prev) => ({ ...prev, barrio: '' }));
+            return;
+        }
+
+        setFormData((prev) => ({ ...prev, barrio: value }));
+    };
+
+    const handleCancelEdit = () => {
+        setIsEditing(false);
+        setFormData(buildEditableFormData(userData));
+
+        if (userData?.barrio) {
+            const esBarrioConocido = BARRIOS_SANTA_ROSA.includes(userData.barrio);
+            setBarrioSeleccionado(esBarrioConocido ? userData.barrio : BARRIO_OTRO_VALUE);
+        } else {
+            setBarrioSeleccionado('');
+        }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!user || isSaving) return;
+
         setNotification({ message: '', type: '' });
-        const result = await actualizarPerfil(user.uid, {
-            ...formData,
-            direccion: construirDireccion(formData),
+        if (!window.confirm('¿Confirmás que querés guardar los cambios de tu información personal?')) return;
+
+        const payload = {
+            nombre: (formData.nombre || '').trim(),
+            apellido: (formData.apellido || '').trim(),
+            telefonoPrincipal: (formData.telefonoPrincipal || '').trim(),
+            telefonoSecundario: (formData.telefonoSecundario || '').trim(),
             provincia: formData.provincia || PROVINCIA_FIJA,
             ciudad: formData.ciudad || CIUDAD_FIJA,
-        });
-        if (result.success) {
-            // Actualizamos la vista solo con los datos que pueden cambiar
-            const updatedViewData = { ...userData, ...result.updatedData };
+            barrio: (formData.barrio || '').trim(),
+            calle: (formData.calle || '').trim(),
+            altura: (formData.altura || '').trim(),
+            direccion: construirDireccion(formData),
+            nombreContactoEmergencia: (formData.nombreContactoEmergencia || '').trim(),
+            telefonoContactoEmergencia: (formData.telefonoContactoEmergencia || '').trim(),
+        };
+
+        setIsSaving(true);
+        try {
+            const result = await actualizarPerfil(user.uid, payload);
+            if (!result.success) {
+                setNotification({ message: result.error || 'No se pudieron guardar los cambios.', type: 'error' });
+                return;
+            }
+
+            const updatedViewData = { ...userData, ...payload };
             setUserData(updatedViewData);
-            setFormData(updatedViewData);
+            setFormData(buildEditableFormData(updatedViewData));
             setIsEditing(false);
-            setNotification({ message: result.message, type: 'success' });
-        } else {
-            setNotification({ message: result.error, type: 'error' });
+            setNotification({ message: result.message || '¡Datos actualizados con éxito!', type: 'success' });
+        } catch (error) {
+            setNotification({ message: 'No se pudieron guardar los cambios. Intentá nuevamente.', type: 'error' });
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -153,6 +222,7 @@ export default function MisDatosPage() {
             setNotification({ message: 'No se pudo identificar tu correo electrónico.', type: 'error' });
             return;
         }
+
         try {
             await resetPassword(user.email);
             setNotification({ message: '¡Correo enviado! Revisa tu bandeja de entrada.', type: 'success' });
@@ -187,27 +257,66 @@ export default function MisDatosPage() {
                                 </button>
                             ) : (
                                 <div className="space-x-2">
-                                    <button type="submit" className="flex items-center bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition">
-                                        <FaSave className="mr-2" /> Guardar
+                                    <button type="submit" disabled={isSaving} className="inline-flex items-center bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition disabled:opacity-60 disabled:cursor-not-allowed">
+                                        <FaSave className="mr-2" /> {isSaving ? 'Guardando...' : 'Guardar'}
                                     </button>
-                                    <button type="button" onClick={() => { setIsEditing(false); setFormData(userData); }} className="flex items-center bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition">
+                                    <button type="button" onClick={handleCancelEdit} disabled={isSaving} className="inline-flex items-center bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition disabled:opacity-60 disabled:cursor-not-allowed">
                                         <FaTimes className="mr-2" /> Cancelar
                                     </button>
                                 </div>
                             )}
                         </div>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
-                            <InfoField label="Nombre" value={formData.nombre} icon={FaUser} name="nombre" isEditing={isEditing} onChange={handleInputChange} isEditable={false} />
-                            <InfoField label="Apellido" value={formData.apellido} icon={FaUser} name="apellido" isEditing={isEditing} onChange={handleInputChange} isEditable={false} />
+                            <InfoField label="Nombre" value={formData.nombre} icon={FaUser} name="nombre" isEditing={isEditing} onChange={handleInputChange} />
+                            <InfoField label="Apellido" value={formData.apellido} icon={FaUser} name="apellido" isEditing={isEditing} onChange={handleInputChange} />
                             <InfoField label="DNI" value={formData.dni} icon={FaIdCard} name="dni" isEditing={isEditing} onChange={handleInputChange} isEditable={false} />
                             <InfoField label="Email registrado" value={formData.email || user?.email} icon={FaUser} name="email" isEditing={false} onChange={handleInputChange} isEditable={false} />
-                            <InfoField label="Domicilio" value={formData.direccion || construirDireccion(formData)} icon={FaMapMarkerAlt} name="direccion" isEditing={false} onChange={handleInputChange} isEditable={false} />
                         </div>
+
+                        <div className="mb-4 mt-2">
+                            <label className="block text-xs font-semibold text-gray-500 mb-1">Provincia y Ciudad</label>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <input value={formData.provincia || PROVINCIA_FIJA} disabled className="w-full p-3 bg-gray-100 border border-gray-200 rounded-lg text-gray-600" />
+                                <input value={formData.ciudad || CIUDAD_FIJA} disabled className="w-full p-3 bg-gray-100 border border-gray-200 rounded-lg text-gray-600" />
+                            </div>
+                        </div>
+
+                        <div className="mb-4">
+                            <label className="block text-xs font-semibold text-gray-500 mb-1">Barrio</label>
+                            {isEditing ? (
+                                <>
+                                    <select name="barrioSeleccionado" value={barrioSeleccionado} onChange={handleBarrioChange} className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                                        <option value="">Elegí un barrio de Santa Rosa</option>
+                                        {BARRIOS_SANTA_ROSA.map((barrio) => (
+                                            <option key={barrio} value={barrio}>{barrio}</option>
+                                        ))}
+                                        <option value={BARRIO_OTRO_VALUE}>Otros</option>
+                                    </select>
+                                    {mostrarCampoBarrioManual && (
+                                        <input
+                                            name="barrio"
+                                            placeholder="Ingresá tu barrio"
+                                            value={formData.barrio || ''}
+                                            onChange={handleInputChange}
+                                            className="w-full mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg"
+                                        />
+                                    )}
+                                </>
+                            ) : (
+                                <p className="text-lg text-gray-800 bg-gray-50 p-3 rounded-lg">{formData.barrio || 'No especificado'}</p>
+                            )}
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
+                            <InfoField label="Calle" value={formData.calle} icon={FaMapMarkerAlt} name="calle" isEditing={isEditing} onChange={handleInputChange} />
+                            <InfoField label="Altura" value={formData.altura} icon={FaMapMarkerAlt} name="altura" isEditing={isEditing} onChange={handleInputChange} />
+                        </div>
+                        <InfoField label="Domicilio completo" value={formData.direccion || construirDireccion(formData)} icon={FaMapMarkerAlt} name="direccion" isEditing={false} onChange={handleInputChange} isEditable={false} />
                     </div>
 
                     <div className="bg-white shadow-xl rounded-2xl p-6">
-                         <h2 className="text-2xl font-bold text-gray-800 mb-6">Información de Contacto</h2>
+                        <h2 className="text-2xl font-bold text-gray-800 mb-6">Información de Contacto</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
                             <InfoField label="Teléfono Principal" value={formData.telefonoPrincipal} icon={FaPhone} name="telefonoPrincipal" isEditing={isEditing} onChange={handleInputChange} />
                             <InfoField label="Teléfono Secundario" value={formData.telefonoSecundario} icon={FaPhone} name="telefonoSecundario" isEditing={isEditing} onChange={handleInputChange} />
