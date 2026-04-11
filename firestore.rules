@@ -28,6 +28,11 @@ service cloud.firestore {
             allow read, write: if request.auth.uid == userId || isAdmin();
           }
         }
+
+        // Subcollection for manual carnet entries
+        match /carnetSanitario/{entryId} {
+          allow read, write: if request.auth.uid == userId || isAdmin();
+        }
       }
     }
 

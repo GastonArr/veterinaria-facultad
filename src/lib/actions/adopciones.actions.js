@@ -7,10 +7,10 @@ export async function getMascotasEnAdopcion() {
   const firestore = admin.firestore();
   try {
     const snapshot = await firestore
-                          .collectionGroup('mascotas')
-                          .where('enAdopcion', '==', true)
-                          .orderBy('fechaNacimiento', 'desc')
-                          .get();
+      .collectionGroup('mascotas')
+      .where('enAdopcion', '==', true)
+      .orderBy('fechaNacimiento', 'desc')
+      .get();
 
     if (snapshot.empty) {
       return [];
@@ -38,46 +38,58 @@ export async function getMascotasEnAdopcion() {
   }
 }
 
-
 /**
- * @function postularseParaAdopcion
- * @description Registra a un usuario como candidato para adoptar una mascota.
+ * @function toggleCandidatoAdopcion
+ * @description Agrega o quita al usuario de la lista de candidatos con un solo clic.
  * @param {string} mascotaPath - La ruta completa del documento de la mascota.
- * @param {object} datosUsuario - Los datos del usuario que se postula.
+ * @param {object} datos - { uid, nombre, telefono }
  */
-export async function postularseParaAdopcion(mascotaPath, datosUsuario) {
-  // 1. Añadimos validación de entrada
+export async function toggleCandidatoAdopcion(mascotaPath, datos) {
   if (!mascotaPath || typeof mascotaPath !== 'string') {
-    console.error('Error de validación: La ruta de la mascota no es válida.', mascotaPath);
-    return { success: false, message: 'Error: La referencia a la mascota no es válida.' };
+    return { success: false, message: 'La referencia a la mascota no es válida.' };
   }
-  if (!datosUsuario || !datosUsuario.uid) {
-    console.error('Error de validación: Los datos del usuario no son válidos o falta el UID.', datosUsuario);
-    return { success: false, message: 'Error: La información del usuario no es válida.' };
+  if (!datos || !datos.uid) {
+    return { success: false, message: 'Debes iniciar sesión para postularte.' };
   }
 
   const firestore = admin.firestore();
   try {
     const mascotaRef = firestore.doc(mascotaPath);
-    const candidatoRef = mascotaRef.collection('candidatos').doc(datosUsuario.uid);
+    let actionTaken = '';
 
-    // 2. Verificamos si ya existe una postulación para evitar duplicados
-    const docSnap = await candidatoRef.get();
-    if (docSnap.exists) {
-        return { success: false, message: 'Ya te has postulado para esta mascota.' };
-    }
+    await firestore.runTransaction(async (t) => {
+      const docSnap = await t.get(mascotaRef);
+      if (!docSnap.exists) throw new Error("La mascota no existe");
 
-    // 3. Creamos la nueva postulación
-    await candidatoRef.set({
-      nombre: datosUsuario.nombre,
-      email: datosUsuario.email,
-      fechaPostulacion: new Date(), // Usar la hora del servidor
+      const data = docSnap.data();
+      let candidatos = data.candidatos || [];
+
+      const exists = candidatos.some(c => c.uid === datos.uid);
+
+      if (exists) {
+        candidatos = candidatos.filter(c => c.uid !== datos.uid);
+        actionTaken = 'removed';
+      } else {
+        candidatos.push({
+          uid: datos.uid,
+          nombre: datos.nombre || 'Usuario',
+          telefono: datos.telefono || 'Sin teléfono',
+          fecha: new Date().toISOString()
+        });
+        actionTaken = 'added';
+      }
+
+      t.update(mascotaRef, { candidatos });
     });
 
-    return { success: true, message: '¡Postulación enviada con éxito! El dueño se pondrá en contacto contigo.' };
+    if (actionTaken === 'added') {
+      return { success: true, message: '¡Postulación enviada exitosamente!' };
+    } else {
+      return { success: true, message: 'Postulación retirada.' };
+    }
 
   } catch (error) {
     console.error('Error al procesar la postulación en Firestore:', error);
-    return { success: false, message: 'No se pudo procesar tu postulación en este momento. Inténtalo de nuevo más tarde.' };
+    return { success: false, message: 'No se pudo procesar tu solicitud ahora. Inténtalo más tarde.' };
   }
 }

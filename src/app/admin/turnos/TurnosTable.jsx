@@ -1,8 +1,8 @@
 'use client';
 
-import { FaCheck, FaTimes, FaDog, FaCat } from 'react-icons/fa';
+import { FaCheck, FaTimes, FaDog, FaCat, FaFileMedical } from 'react-icons/fa';
 
-export default function TurnosTable({ turnos, onUpdate, isUpdating, currentView }) {
+export default function TurnosTable({ turnos, onUpdate, isUpdating, currentView, onDocumentar }) {
   const statusStyles = {
     pendiente: 'bg-yellow-200 text-yellow-800',
     confirmado: 'bg-blue-200 text-blue-800',
@@ -92,6 +92,11 @@ export default function TurnosTable({ turnos, onUpdate, isUpdating, currentView 
                       {currentView !== 'finalizados' && turno.estado !== 'cancelado' && (
                         <button onClick={() => handleAction(turno, 'cancelado')} className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors" title="Cancelar">
                           <FaTimes />
+                        </button>
+                      )}
+                      {turno.estado !== 'cancelado' && (
+                        <button onClick={() => onDocumentar(turno)} className="p-2 bg-indigo-500 text-white rounded-full hover:bg-indigo-600 transition-colors ml-1" title="Documentar">
+                          <FaFileMedical />
                         </button>
                       )}
                     </>

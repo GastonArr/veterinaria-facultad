@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState, use, useTransition } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
 import { collection, doc, getDoc, getDocs, orderBy, query, updateDoc, addDoc } from 'firebase/firestore';
 import SubHeader from '@/app/components/SubHeader';
-import { FaSyringe, FaCalendarAlt, FaPlus, FaFileMedical, FaDog, FaCut, FaStethoscope, FaInfoCircle, FaTimes, FaHeartbeat, FaShieldAlt } from 'react-icons/fa';
+import { FaSyringe, FaCalendarAlt, FaPlus, FaFileMedical, FaDog, FaCut, FaStethoscope, FaInfoCircle, FaTimes, FaHeartbeat, FaShieldAlt, FaArrowLeft } from 'react-icons/fa';
+import Link from 'next/link';
 
 // --- COMPONENTES DE DISEÑO --- //
 
@@ -372,10 +372,10 @@ const AddEntryModal = ({ isOpen, onClose, onSubmit }) => {
 };
 
 
-// --- VISTA PRINCIPAL --- //
-export default function CarnetSanitarioPage({ params }) {
-    const { mascotaId } = use(params);
-    const { user } = useAuth();
+// --- VISTA PRINCIPAL (MODO ADMIN) --- //
+export default function AdminCarnetSanitarioPage({ params }) {
+    // Usamos 'id' (userId) y 'mascotaId' que provienen de los params de la ruta: /admin/clientes/[id]/mascotas/[mascotaId]
+    const { id: userId, mascotaId } = use(params);
 
     const [mascota, setMascota] = useState(null);
     const [carnet, setCarnet] = useState([]);
@@ -385,10 +385,10 @@ export default function CarnetSanitarioPage({ params }) {
     const [isPending, startTransition] = useTransition();
 
     const fetchData = async () => {
-        if (!user?.uid || !mascotaId) return;
+        if (!userId || !mascotaId) return;
         if (!loading) setLoading(true);
         try {
-            const mascotaRef = doc(db, 'users', user.uid, 'mascotas', mascotaId);
+            const mascotaRef = doc(db, 'users', userId, 'mascotas', mascotaId);
             const mascotaSnap = await getDoc(mascotaRef);
             if (mascotaSnap.exists()) setMascota({ id: mascotaSnap.id, ...mascotaSnap.data() });
             else throw new Error("No se encontró la mascota.");
@@ -433,12 +433,12 @@ export default function CarnetSanitarioPage({ params }) {
         finally { setLoading(false); }
     };
 
-    useEffect(() => { fetchData(); }, [user, mascotaId]);
+    useEffect(() => { fetchData(); }, [userId, mascotaId]);
 
     const handleAddEntry = (data) => {
         startTransition(async () => {
             try {
-                const carnetRef = collection(db, 'users', user.uid, 'mascotas', mascotaId, 'carnetSanitario');
+                const carnetRef = collection(db, 'users', userId, 'mascotas', mascotaId, 'carnetSanitario');
                 await addDoc(carnetRef, {
                     ...data,
                     fechaCreacion: new Date()
@@ -451,7 +451,7 @@ export default function CarnetSanitarioPage({ params }) {
     const handleFichaUpdate = (data) => {
         startTransition(async () => {
             try {
-                const mascotaRef = doc(db, 'users', user.uid, 'mascotas', mascotaId);
+                const mascotaRef = doc(db, 'users', userId, 'mascotas', mascotaId);
                 await updateDoc(mascotaRef, data);
             } catch (err) { alert("Error guardando las notas: " + err.message); }
         });
@@ -459,9 +459,17 @@ export default function CarnetSanitarioPage({ params }) {
 
     return (
         <div className="bg-slate-50 min-h-screen pb-32">
-            <SubHeader title={mascota ? `Carnet de ${mascota.nombre}` : 'Cargando...'} />
+            <SubHeader title={mascota ? `Historia Clínica: ${mascota.nombre}` : 'Cargando...'} />
 
             <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 md:py-12">
+                <div className="mb-6">
+                    <Link href={`/admin/clientes/${userId}`}>
+                        <span className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors duration-200 cursor-pointer">
+                            <FaArrowLeft className="mr-2" /> Volver a Ficha del Cliente
+                        </span>
+                    </Link>
+                </div>
+
                 <AddEntryModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={handleAddEntry} />
 
                 {loading ? (
@@ -495,7 +503,7 @@ export default function CarnetSanitarioPage({ params }) {
                             </div>
 
                             <button onClick={() => setIsModalOpen(true)} className="hidden sm:flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-2xl font-bold shadow-lg transition-transform active:scale-95">
-                                <FaPlus /> Nuevo
+                                <FaPlus /> Añadir Entrada
                             </button>
                         </div>
 

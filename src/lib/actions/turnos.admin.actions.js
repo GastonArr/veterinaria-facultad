@@ -89,6 +89,8 @@ export async function getTurnsForAdminDashboard() {
         estado: turnoData.estado,
         necesitaTraslado: turnoData.necesitaTraslado || false,
         fecha: toISOStringOrNull(turnoData.fecha),
+        comentario: turnoData.comentario || '',
+        medicamentosSuministrados: turnoData.medicamentosSuministrados || [],
         user: serializableUser,
         mascota: serializableMascota,
       };
@@ -190,3 +192,29 @@ export async function updateTurnoStatus({ userId, mascotaId, turnoId, newStatus,
     return { success: false, error: `Error al actualizar: ${error.message}` };
   }
 }
+
+export async function documentarTurno({ userId, mascotaId, turnoId, comentario, medicamentosSuministrados }) {
+  try {
+    if (!userId || !mascotaId || !turnoId) {
+      throw new Error("Faltan parámetros requeridos para documentar el turno.");
+    }
+    
+    const turnoRef = db.collection('users').doc(userId).collection('mascotas').doc(mascotaId).collection('turnos').doc(turnoId);
+    
+    const updateData = {
+      comentario: comentario || '',
+      medicamentosSuministrados: medicamentosSuministrados || []
+    };
+
+    await turnoRef.update(updateData);
+    
+    revalidatePath('/admin/turnos');
+    
+    return { success: true, message: "Turno documentado exitosamente." };
+
+  } catch (error) {
+    console.error("Error en documentarTurno:", error);
+    return { success: false, error: `Error al documentar el turno: ${error.message}` };
+  }
+}
+

@@ -44,7 +44,7 @@ export default async function ClienteDetallePage({ params }) {
       <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-1">{user.nombre} {user.apellido}</h1>
         <p className="text-sm text-gray-500 mb-4">ID de Cliente: {user.id}</p>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-gray-700">
           <div><strong>Email:</strong> {user.email}</div>
           <div><strong>DNI:</strong> {user.dni || 'No especificado'}</div>
@@ -74,16 +74,25 @@ export default async function ClienteDetallePage({ params }) {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Raza</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nacimiento</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tamaño</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {mascotas.map(mascota => (
-                    <tr key={mascota.id}>
+                    <tr key={mascota.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{mascota.nombre}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{mascota.especie}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{mascota.raza}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{mascota.fechaNacimiento ? new Date(mascota.fechaNacimiento).toLocaleDateString() : 'N/A'}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{mascota.tamaño}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <Link
+                          href={`/admin/clientes/${id}/mascotas/${mascota.id}`}
+                          className="inline-flex items-center justify-center bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-900 px-3 py-1.5 rounded-lg border border-indigo-200 transition-colors"
+                        >
+                          📋 Historia Clínica
+                        </Link>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
