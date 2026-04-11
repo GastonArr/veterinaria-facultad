@@ -1,6 +1,8 @@
 'use client';
 
 import { FaCheck, FaTimes, FaDog, FaCat, FaFileMedical } from 'react-icons/fa';
+import Link from 'next/link';
+import { FaCalendarAlt } from 'react-icons/fa';
 
 export default function TurnosTable({ turnos, onUpdate, isUpdating, currentView, onDocumentar }) {
   const statusStyles = {
@@ -93,6 +95,11 @@ export default function TurnosTable({ turnos, onUpdate, isUpdating, currentView,
                         <button onClick={() => handleAction(turno, 'cancelado')} className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors" title="Cancelar">
                           <FaTimes />
                         </button>
+                      )}
+                      {currentView === 'reprogramar' && turno.estado === 'reprogramar' && (
+                        <Link href={`/turnos/reprogramar?turnoId=${turno.id}&userId=${turno.userId}&mascotaId=${turno.mascotaId}`} className="p-2 bg-orange-500 text-white rounded-full hover:bg-orange-600 transition-colors" title="Reprogramar turno">
+                          <FaCalendarAlt />
+                        </Link>
                       )}
                       {turno.estado !== 'cancelado' && (
                         <button onClick={() => onDocumentar(turno)} className="p-2 bg-indigo-500 text-white rounded-full hover:bg-indigo-600 transition-colors ml-1" title="Documentar">

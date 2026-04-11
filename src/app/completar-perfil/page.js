@@ -9,6 +9,7 @@ import { completarPerfil } from '@/lib/actions/user.actions.js';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { FaUser, FaIdCard, FaPhone, FaMapMarkerAlt, FaExclamationTriangle } from 'react-icons/fa';
+import { BARRIOS_SANTA_ROSA, CIUDAD_FIJA, PROVINCIA_FIJA, construirDireccion } from '@/lib/utils/direccion';
 
 const FormInput = ({ id, name, type, placeholder, value, onChange, required = false, maxLength, label, icon: Icon, error }) => (
     <div className="mb-4">
@@ -34,9 +35,16 @@ export default function CompletarPerfilPage() {
   const [profileLoading, setProfileLoading] = useState(true);
   const [formData, setFormData] = useState({
     nombre: '', apellido: '', dni: '', telefonoPrincipal: '', telefonoSecundario: '',
-    direccion: '', nombreContactoEmergencia: '', telefonoContactoEmergencia: ''
+    provincia: PROVINCIA_FIJA,
+    ciudad: CIUDAD_FIJA,
+    barrio: '',
+    calle: '',
+    altura: '',
+    direccion: '',
+    nombreContactoEmergencia: '', telefonoContactoEmergencia: ''
   });
   const [errors, setErrors] = useState({});
+  const [mostrarBarrios, setMostrarBarrios] = useState(false);
 
   const validacionDatosCompletarPerfil = (data) => {
     const errors = {};
@@ -49,7 +57,9 @@ export default function CompletarPerfilPage() {
     if (!data.dni.trim()) errors.dni = 'El DNI es obligatorio.';
     else if (!/^\d{7,8}$/.test(data.dni)) errors.dni = 'El DNI debe tener entre 7 y 8 números.';
 
-    if (!data.direccion.trim()) errors.direccion = 'La dirección es obligatoria.';
+    if (!data.barrio.trim()) errors.barrio = 'El barrio es obligatorio.';
+    if (!data.calle.trim()) errors.calle = 'La calle es obligatoria.';
+    if (!data.altura.trim()) errors.altura = 'La altura es obligatoria.';
 
     if (!data.telefonoPrincipal.trim()) errors.telefonoPrincipal = 'El teléfono principal es obligatorio.';
     else if (!/^\d{10,15}$/.test(data.telefonoPrincipal)) errors.telefonoPrincipal = 'El teléfono debe tener entre 10 y 15 números.';
@@ -88,7 +98,7 @@ export default function CompletarPerfilPage() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if ((name === 'dni' || name.includes('telefono')) && value && !/^[0-9]*$/.test(value)) return;
+    if ((name === 'dni' || name.includes('telefono') || name === 'altura') && value && !/^[0-9]*$/.test(value)) return;
     
     setFormData(prev => ({ ...prev, [name]: value }));
     
@@ -109,7 +119,11 @@ export default function CompletarPerfilPage() {
     }
 
     startTransition(async () => {
-      const result = await completarPerfil(user.uid, formData);
+      const result = await completarPerfil(user.uid, {
+        ...formData,
+        email: user.email || '',
+        direccion: construirDireccion(formData),
+      });
       if (result.success) {
         toast.success('¡Perfil completado! Redirigiendo...');
         setTimeout(() => router.push(result.role === 'admin' ? '/admin' : '/'), 1500);
@@ -144,7 +158,36 @@ export default function CompletarPerfilPage() {
                         <FormInput id="apellido" name="apellido" type="text" label="Apellido" icon={FaUser} value={formData.apellido} onChange={handleChange} required error={errors.apellido} />
                     </div>
                     <FormInput id="dni" name="dni" type="tel" label="DNI" icon={FaIdCard} placeholder="Sin puntos" value={formData.dni} onChange={handleChange} required maxLength="8" error={errors.dni} />
-                    <FormInput id="direccion" name="direccion" type="text" label="Dirección" icon={FaMapMarkerAlt} placeholder="Av. Siempreviva 742" value={formData.direccion} onChange={handleChange} required error={errors.direccion} />
+                    <div className="mb-4">
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">Provincia y Ciudad</label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <input value={formData.provincia} disabled className="w-full p-3 bg-gray-100 border border-gray-200 rounded-lg text-gray-600" />
+                            <input value={formData.ciudad} disabled className="w-full p-3 bg-gray-100 border border-gray-200 rounded-lg text-gray-600" />
+                        </div>
+                    </div>
+                    <div className="mb-4">
+                        <label className="block text-xs font-semibold text-gray-500 mb-1">Barrio</label>
+                        <button
+                            type="button"
+                            onClick={() => setMostrarBarrios(!mostrarBarrios)}
+                            className="w-full mb-2 p-3 bg-violet-50 border border-violet-200 rounded-lg text-violet-700 font-semibold hover:bg-violet-100 transition-colors"
+                        >
+                            {mostrarBarrios ? 'Ocultar barrios' : 'Seleccionar barrio'}
+                        </button>
+                        {mostrarBarrios && (
+                            <select name="barrio" value={formData.barrio} onChange={handleChange} className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg" required>
+                                <option value="">Elegí un barrio de Santa Rosa</option>
+                                {BARRIOS_SANTA_ROSA.map((barrio) => (
+                                    <option key={barrio} value={barrio}>{barrio}</option>
+                                ))}
+                            </select>
+                        )}
+                        {errors.barrio && <p className="text-red-600 text-xs mt-1">{errors.barrio}</p>}
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
+                        <FormInput id="calle" name="calle" type="text" label="Calle" icon={FaMapMarkerAlt} placeholder="Av. Siempreviva" value={formData.calle} onChange={handleChange} required error={errors.calle} />
+                        <FormInput id="altura" name="altura" type="text" label="Altura" icon={FaMapMarkerAlt} placeholder="742" value={formData.altura} onChange={handleChange} required error={errors.altura} />
+                    </div>
                 </div>
 
                 <div className="bg-white shadow-xl rounded-2xl p-6 mb-8">

@@ -7,6 +7,7 @@ import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { Toaster, toast } from 'react-hot-toast';
 import { registerWithEmail } from '@/lib/actions/user.actions.js';
 import PasswordStrengthMeter from '@/app/components/PasswordStrengthMeter';
+import { BARRIOS_SANTA_ROSA, CIUDAD_FIJA, PROVINCIA_FIJA, construirDireccion } from '@/lib/utils/direccion';
 
 export default function LoginPage() {
     const { user, loginWithGoogle, loginWithEmail, signInWithToken, resetPassword } = useAuth();
@@ -21,8 +22,15 @@ export default function LoginPage() {
 
     const [formData, setFormData] = useState({
         nombre: '', apellido: '', dni: '', telefonoPrincipal: '', telefonoSecundario: '', 
-        direccion: '', nombreContactoEmergencia: '', telefonoContactoEmergencia: ''
+        provincia: PROVINCIA_FIJA,
+        ciudad: CIUDAD_FIJA,
+        barrio: '',
+        calle: '',
+        altura: '',
+        direccion: '',
+        nombreContactoEmergencia: '', telefonoContactoEmergencia: ''
     });
+    const [mostrarBarrios, setMostrarBarrios] = useState(false);
 
     useEffect(() => {
         if (user) {
@@ -51,9 +59,11 @@ export default function LoginPage() {
         if (isRegistering) {
             if (password !== confirmPassword) return setError("Las contraseñas no coinciden.");
             if (password.length < 6) return setError("La contraseña debe tener al menos 6 caracteres.");
+            if (!formData.barrio || !formData.calle || !formData.altura) return setError('Debes completar barrio, calle y altura.');
             
             try {
-                const newUserData = { email, password, ...formData };
+                const direccion = construirDireccion(formData);
+                const newUserData = { email, password, ...formData, direccion };
                 const result = await registerWithEmail(newUserData);
 
                 if (result.success && result.token) {
@@ -88,7 +98,7 @@ export default function LoginPage() {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        if ((name === 'dni' || name.includes('telefono')) && value && !/^[0-9]+$/.test(value)) return;
+        if ((name === 'dni' || name.includes('telefono') || name === 'altura') && value && !/^[0-9]+$/.test(value)) return;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
@@ -147,7 +157,29 @@ export default function LoginPage() {
                                     <input name="apellido" placeholder="Apellido" value={formData.apellido} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"/>
                                 </div>
                                 <input name="dni" placeholder="DNI" value={formData.dni} onChange={handleInputChange} required maxLength="8" className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"/>
-                                <input name="direccion" placeholder="Dirección" value={formData.direccion} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"/>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <input value={formData.provincia} disabled className="w-full p-3 bg-gray-100 border border-gray-200 rounded-lg text-gray-600"/>
+                                    <input value={formData.ciudad} disabled className="w-full p-3 bg-gray-100 border border-gray-200 rounded-lg text-gray-600"/>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setMostrarBarrios(!mostrarBarrios)}
+                                    className="w-full p-3 bg-violet-50 border border-violet-200 rounded-lg text-violet-700 font-semibold hover:bg-violet-100 transition-colors"
+                                >
+                                    {mostrarBarrios ? 'Ocultar barrios' : 'Seleccionar barrio'}
+                                </button>
+                                {mostrarBarrios && (
+                                    <select name="barrio" value={formData.barrio} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                                        <option value="">Elegí un barrio de Santa Rosa</option>
+                                        {BARRIOS_SANTA_ROSA.map((barrio) => (
+                                            <option key={barrio} value={barrio}>{barrio}</option>
+                                        ))}
+                                    </select>
+                                )}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <input name="calle" placeholder="Calle" value={formData.calle} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg"/>
+                                    <input name="altura" placeholder="Altura" value={formData.altura} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg"/>
+                                </div>
                                 <input name="telefonoPrincipal" placeholder="Teléfono" value={formData.telefonoPrincipal} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"/>
                                 
                                 <h2 className="text-center text-base font-semibold text-gray-700">Contacto de Emergencia</h2>

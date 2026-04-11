@@ -13,7 +13,7 @@ import { collection, getDocs, query } from 'firebase/firestore';
 import { getTurnosByUserId } from '@/lib/actions/turnos.user.actions.js';
 
 
-const TurnoCard = ({ turno }) => {
+const TurnoCard = ({ turno, compactarCancelado = false }) => {
     const statusStyles = {
         pendiente: 'bg-yellow-100 text-yellow-800',
         confirmado: 'bg-blue-100 text-blue-800',
@@ -33,6 +33,8 @@ const TurnoCard = ({ turno }) => {
         : 'Fecha no especificada';
 
     const necesitaReprogramacion = turno.estado === 'reprogramar';
+    const estaCancelado = turno.estado === 'cancelado';
+    const [mostrarDetalleCancelado, setMostrarDetalleCancelado] = useState(!compactarCancelado);
     
     // El color del ícono depende del tipo de servicio
     const iconColor = turno.tipo === 'peluqueria' ? 'text-pink-500' : 'text-blue-500';
@@ -62,9 +64,21 @@ const TurnoCard = ({ turno }) => {
                 </span>
             </div>
             
-            {!necesitaReprogramacion && (
+            {!necesitaReprogramacion && (!compactarCancelado || mostrarDetalleCancelado) && (
                 <div className="text-right text-sm text-gray-500">
                     <p>{formattedDate}</p>
+                </div>
+            )}
+
+            {compactarCancelado && estaCancelado && (
+                <div className="mt-3 text-center">
+                    <button
+                        type="button"
+                        onClick={() => setMostrarDetalleCancelado((prev) => !prev)}
+                        className="inline-flex items-center px-4 py-2 rounded-lg bg-red-50 text-red-700 font-semibold hover:bg-red-100 transition-colors"
+                    >
+                        {mostrarDetalleCancelado ? 'Ocultar detalle' : 'Ver detalle del turno cancelado'}
+                    </button>
                 </div>
             )}
 
@@ -190,7 +204,7 @@ export default function MisTurnosPage() {
                      <h2 className="flex items-center text-2xl font-bold text-gray-700 mb-4"><FaHistory className="mr-3 text-gray-500"/>Historial</h2>
                     {turnos.historial.length > 0 ? (
                         <div className="space-y-4">
-                            {turnos.historial.map(turno => <TurnoCard key={turno.id} turno={turno} />)}
+                            {turnos.historial.map(turno => <TurnoCard key={turno.id} turno={turno} compactarCancelado={turno.estado === 'cancelado'} />)}
                         </div>
                     ) : (<p className="text-gray-500 italic">No hay turnos en tu historial.</p>)}
                 </section>

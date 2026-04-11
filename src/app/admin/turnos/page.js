@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from 'react';
 import Link from 'next/link';
-import { FaArrowLeft, FaFileMedical } from 'react-icons/fa';
+import { FaArrowLeft, FaCalendarAlt, FaFileMedical } from 'react-icons/fa';
 import { getTurnsForAdminDashboard, updateTurnoStatus } from "@/lib/actions/turnos.admin.actions.js";
 import { obtenerServicios } from '@/lib/actions/servicios.actions.js';
 import TurnosTable from './TurnosTable';
@@ -58,6 +58,12 @@ function TurnoCard({ turno, onUpdate, isUpdating, currentView, onDocumentar }) {
               {currentView === 'proximos' && turno.estado === 'pendiente' && (<button onClick={() => handleAction('confirmado')} className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition-colors">Confirmar</button>)}
               {currentView === 'hoy' && turno.estado === 'confirmado' && (<button onClick={() => handleAction('finalizado')} className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">Finalizar</button>)}
               {currentView !== 'finalizados' && turno.estado !== 'cancelado' && (<button onClick={() => handleAction('cancelado')} className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors">Cancelar</button>)}
+              {currentView === 'reprogramar' && turno.estado === 'reprogramar' && (
+                <Link href={`/turnos/reprogramar?turnoId=${turno.id}&userId=${turno.userId}&mascotaId=${turno.mascotaId}`} className="px-3 py-1 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors inline-flex items-center">
+                  <FaCalendarAlt className="mr-1" />
+                  Reprogramar turno
+                </Link>
+              )}
               {turno.estado !== 'cancelado' && (<button onClick={() => onDocumentar(turno)} className="px-3 py-1 bg-indigo-500 text-white rounded hover:bg-indigo-600 transition-colors" title="Documentar Turno"><FaFileMedical /></button>)}
             </>
           )}
@@ -159,7 +165,7 @@ export default function AdminTurnosDashboard() {
 
       {isUpdating && <div className='text-center mb-4 text-blue-600 font-semibold'>Actualizando...</div>}
 
-      <div className="flex flex-col md:flex-row gap-6 mt-6">
+      <div className="flex flex-col gap-6 mt-6">
         {/* Columna Clínica */}
         <div className="bg-gray-50 p-4 rounded-lg flex-1">
           <div className="flex items-center mb-4">

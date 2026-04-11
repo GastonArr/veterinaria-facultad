@@ -43,7 +43,7 @@ export default function LandingPage() {
             <div className="my-6 text-base space-y-2 font-medium">
               <p>Aquí puedes encontrar la mejor atención para tus mascotas.</p>
               <p>Reservar turnos para la veterinaria y la peluquería de tus mascotas.</p>
-              <p>Realizar COMPRAS y ver mascotas en ADOPCION.</p>
+              <p>Gestionar adopciones y toda la información de tus mascotas en un solo lugar.</p>
             </div>
             
             {/* Login Button */}
