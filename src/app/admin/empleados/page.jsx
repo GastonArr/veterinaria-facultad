@@ -1,3 +1,5 @@
+import Link from 'next/link';
+import { FaArrowLeft } from 'react-icons/fa';
 
 import { getAllUsers } from '@/lib/actions/admin.actions';
 import EmpleadosClientView from './EmpleadosClientView';
@@ -8,6 +10,14 @@ async function EmpleadosPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <div className="mb-6">
+        <Link href="/admin">
+          <span className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors duration-200 cursor-pointer">
+            <FaArrowLeft className="mr-2" />
+            Volver al Panel Principal
+          </span>
+        </Link>
+      </div>
       
       <h1 className="text-3xl font-bold mb-6 text-gray-800">Gestión de Empleados y Roles</h1>
       

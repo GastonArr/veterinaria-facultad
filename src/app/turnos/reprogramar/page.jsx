@@ -12,6 +12,8 @@ dayjs.locale('es');
 import { reprogramarTurnoPorUsuario, getTurnoDetailsForReprogramming, getAvailableSlotsForReprogramming } from '@/lib/actions/turnos.user.actions.js';
 import { getDiasNoLaborales } from '@/lib/actions/config.actions.js';
 import toast from 'react-hot-toast';
+import Link from 'next/link';
+import { FaArrowLeft } from 'react-icons/fa';
 
 const Spinner = ({ small } = {}) => (
     <div className={`border-2 ${small ? 'border-white' : 'border-gray-200'} border-t-blue-500 rounded-full ${small ? 'w-5 h-5' : 'w-8 h-8'} animate-spin`}></div>
@@ -179,6 +181,14 @@ function ReprogramarTurnoComponent() {
 
     return (
         <div className="bg-white p-8 rounded-lg shadow-xl max-w-3xl mx-auto">
+            <div className="mb-6">
+                <Link href="/turnos/mis-turnos">
+                    <span className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors duration-200 cursor-pointer">
+                        <FaArrowLeft className="mr-2" />
+                        Volver a Mis Turnos
+                    </span>
+                </Link>
+            </div>
             <h1 className="text-3xl font-bold text-gray-800 mb-2">Reprogramar Turno</h1>
             <p className="text-gray-600 mb-8">Servicio de <span className="font-semibold">{turnoDetails.tipo}</span> para <span className="font-semibold">{turnoDetails.mascota.nombre}</span>.</p>
             

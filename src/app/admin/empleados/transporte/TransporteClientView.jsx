@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
+import { FaArrowLeft } from 'react-icons/fa';
 import { updateTurnoStatusByEmpleado } from '@/lib/actions/turnos.empleado.actions';
 
 // --- Componente para el Botón de Acción Dinámico del Transportista ---
@@ -77,6 +79,14 @@ const TransporteClientView = ({ initialTurnos }) => {
 
     return (
         <div className="p-4 md:p-8 bg-white text-gray-900 min-h-screen">
+            <div className="mb-6">
+                <Link href="/mis-datos">
+                    <span className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors duration-200 cursor-pointer">
+                        <FaArrowLeft className="mr-2" />
+                        Volver a Mis Datos
+                    </span>
+                </Link>
+            </div>
             <h1 className="text-2xl font-bold text-gray-800 mb-2">Panel de Transporte</h1>
             <p className="text-gray-600 mb-8">Gestiona las recogidas y entregas de mascotas del día.</p>
 
