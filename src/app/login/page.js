@@ -8,6 +8,7 @@ import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { registerWithEmail } from '@/lib/actions/user.actions.js';
 import PasswordStrengthMeter from '@/app/components/PasswordStrengthMeter';
 import { BARRIOS_SANTA_ROSA, CIUDAD_FIJA, PROVINCIA_FIJA, construirDireccion } from '@/lib/utils/direccion';
+import { getPasswordValidation } from '@/lib/utils/passwordValidation';
 
 export default function LoginPage() {
     const { user, loginWithGoogle, loginWithEmail, signInWithToken } = useAuth();
@@ -58,7 +59,10 @@ export default function LoginPage() {
 
         if (isRegistering) {
             if (password !== confirmPassword) return setError("Las contraseñas no coinciden.");
-            if (password.length < 6) return setError("La contraseña debe tener al menos 6 caracteres.");
+            const passwordValidation = getPasswordValidation(password);
+            if (!passwordValidation.isValid) {
+                return setError(`La contraseña no cumple con los requisitos: ${passwordValidation.unmetRequirements[0].text}.`);
+            }
             if (!formData.barrio || !formData.calle || !formData.altura) return setError('Debes completar barrio, calle y altura.');
             
             try {
