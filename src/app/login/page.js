@@ -3,14 +3,14 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
-import { Toaster, toast } from 'react-hot-toast';
 import { registerWithEmail } from '@/lib/actions/user.actions.js';
 import PasswordStrengthMeter from '@/app/components/PasswordStrengthMeter';
 import { BARRIOS_SANTA_ROSA, CIUDAD_FIJA, PROVINCIA_FIJA, construirDireccion } from '@/lib/utils/direccion';
 
 export default function LoginPage() {
-    const { user, loginWithGoogle, loginWithEmail, signInWithToken, resetPassword } = useAuth();
+    const { user, loginWithGoogle, loginWithEmail, signInWithToken } = useAuth();
     const router = useRouter();
     
     const [email, setEmail] = useState('');
@@ -85,17 +85,6 @@ export default function LoginPage() {
         }
     };
 
-    const handlePasswordReset = async () => {
-        if (!email) return setError("Ingresa tu email para restablecer la contraseña.");
-        setError(null);
-        try {
-            await resetPassword(email);
-            toast.success('Correo de restablecimiento enviado. Revisa tu bandeja de entrada.');
-        } catch (error) {
-            setError('No se pudo enviar el correo de restablecimiento.');
-        }
-    };
-
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         if ((name === 'dni' || name.includes('telefono') || name === 'altura') && value && !/^[0-9]+$/.test(value)) return;
@@ -104,7 +93,6 @@ export default function LoginPage() {
 
     return (
         <div className="min-h-screen bg-white flex flex-col justify-center items-center p-4">
-            <Toaster position="bottom-center" />
             <div className="w-full max-w-sm mx-auto">
                 <h1 className="text-3xl font-bold text-center text-gray-800 mb-8">{
                     isRegistering ? 'Crear una Cuenta' : 'Iniciar Sesión'
@@ -124,9 +112,9 @@ export default function LoginPage() {
                             <div className="flex justify-between items-baseline">
                                 <label className="text-xs font-semibold text-gray-600">Contraseña</label>
                                 {!isRegistering && (
-                                    <button type="button" onClick={handlePasswordReset} className="text-xs text-blue-500 hover:underline font-semibold">
+                                    <Link href="/login/forgot-password" className="text-xs text-blue-500 hover:underline font-semibold">
                                         ¿Olvidaste tu contraseña?
-                                    </button>
+                                    </Link>
                                 )}
                             </div>
                             <div className="relative mt-1">
