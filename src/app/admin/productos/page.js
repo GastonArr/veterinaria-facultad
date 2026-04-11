@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase'; // <-- CORREGIDO
 import { collection, getDocs } from 'firebase/firestore';
+import Link from 'next/link';
+import { FaArrowLeft } from 'react-icons/fa';
 
 const ProductosPage = () => {
   const { userRole } = useAuth();
@@ -42,6 +44,14 @@ const ProductosPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <div className="mb-6">
+        <Link href="/admin">
+          <span className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors duration-200 cursor-pointer">
+            <FaArrowLeft className="mr-2" />
+            Volver al Panel Principal
+          </span>
+        </Link>
+      </div>
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Productos</h1>
         <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
