@@ -3,66 +3,115 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to check for admin role via custom claims
-    function isAdmin() {
-      return request.auth != null && request.auth.token.admin == true;
+    function isSignedIn() {
+      return request.auth != null;
     }
 
-    // --- USER DATA ---
+    function roleFromToken() {
+      return isSignedIn() && request.auth.token.role is string
+        ? request.auth.token.role
+        : '';
+    }
+
+    function roleFromDoc() {
+      return isSignedIn() &&
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role is string
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role
+        : '';
+    }
+
+    function hasRole(role) {
+      return roleFromToken() == role || roleFromDoc() == role;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      // Compatibilidad con custom claim legacy + rol moderno.
+      return isSignedIn() && (request.auth.token.admin == true || hasRole('admin'));
+    }
+
+    function isStaff() {
+      return isSignedIn() && (
+        hasRole('admin') ||
+        hasRole('peluqueria') ||
+        hasRole('transporte')
+      );
+    }
+
+    // --- USERS ---
     match /users/{userId} {
-      allow read, update: if request.auth.uid == userId || isAdmin();
-      allow create: if request.auth != null;
+      // Dueño de la cuenta o staff interno pueden leer ficha.
+      allow read: if isOwner(userId) || isStaff();
 
-      // Subcollection: MASCOTAS
-      // Users can manage their own pets. Admins can manage any pet.
+      // Solo dueño/admin pueden modificar perfil de usuario.
+      allow create: if isSignedIn();
+      allow update, delete: if isOwner(userId) || isAdmin();
+
+      // Mascotas del cliente
       match /mascotas/{mascotaId} {
-        allow get, list, write: if request.auth.uid == userId || isAdmin();
+        // Historia clínica y ficha visibles para dueño/staff.
+        allow get, list: if isOwner(userId) || isStaff();
 
-        // -- NEW NESTED STRUCTURE --
-        // A user can manage the appointments for their own pet.
+        // Alta/edición/baja de mascota: dueño o admin.
+        allow create, update, delete: if isOwner(userId) || isAdmin();
+
+        // Turnos asociados a la mascota
         match /turnos/{turnoId} {
-          allow read, write: if request.auth.uid == userId || isAdmin();
+          allow read: if isOwner(userId) || isStaff();
+          allow write: if isOwner(userId) || isAdmin();
 
-          // A user can manage the medical records for an appointment.
           match /medicamentos/{medicamentoId} {
-            allow read, write: if request.auth.uid == userId || isAdmin();
+            allow read: if isOwner(userId) || isStaff();
+            allow write: if isOwner(userId) || isAdmin();
           }
         }
 
-        // Subcollection for manual carnet entries
+        // Entradas manuales de historia clínica
         match /carnetSanitario/{entryId} {
-          allow read, write: if request.auth.uid == userId || isAdmin();
+          allow read: if isOwner(userId) || isStaff();
+          allow write: if isOwner(userId) || isAdmin();
         }
+      }
+
+      // Compatibilidad con estructura legacy usada en /turnos/page.jsx
+      match /turnos/{turnoId} {
+        allow read, write: if isOwner(userId) || isAdmin();
       }
     }
 
-    // --- GLOBAL COLLECTIONS ---
+    // --- COLECCIONES GLOBALES ---
 
-    // SERVICIOS
-    // Anyone can read services. Only admins can modify them.
+    // Catálogo de servicios visible a todos.
     match /servicios/{servicioId} {
       allow read: if true;
       allow write: if isAdmin();
     }
-    
-    // PRODUCTOS (for Store)
-    // Anyone can read products. Only admins can modify them.
+
+    // Productos visibles a todos.
     match /productos/{productoId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // TURNOS PELUQUERIA (for Availability)
-    // Anyone can read availability. Only authenticated users can update it (via server action).
+    // Disponibilidad de peluquería.
     match /turnos_peluqueria/{fecha} {
-        allow read: if true;
-        allow write: if request.auth != null;
+      allow read: if true;
+      allow write: if isSignedIn();
     }
 
-    // CONFIGURACION (Días no laborales, etc.)
-    // Cualquiera puede leer la configuración de la app. Solo los admins pueden modificarla.
+    // Configuración general.
     match /configuracion/{docId} {
       allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Reserva para potencial colección global legacy de turnos.
+    match /turnos/{turnoId} {
+      allow read: if isSignedIn();
       allow write: if isAdmin();
     }
   }
