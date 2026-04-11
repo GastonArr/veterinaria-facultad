@@ -101,7 +101,7 @@ export default function TurnosTable({ turnos, onUpdate, isUpdating, currentView,
                           <FaCalendarAlt />
                         </Link>
                       )}
-                      {turno.estado !== 'cancelado' && (
+                      {currentView !== 'proximos' && turno.estado !== 'cancelado' && (
                         <button onClick={() => onDocumentar(turno)} className="p-2 bg-indigo-500 text-white rounded-full hover:bg-indigo-600 transition-colors ml-1" title="Documentar">
                           <FaFileMedical />
                         </button>
