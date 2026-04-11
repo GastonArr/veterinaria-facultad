@@ -9,6 +9,7 @@ import SubHeader from '@/app/components/SubHeader';
 import { FaUser, FaIdCard, FaPhone, FaMapMarkerAlt, FaExclamationTriangle, FaSave, FaEdit, FaTimes, FaKey } from 'react-icons/fa';
 import Link from 'next/link';
 import { FaUserShield , FaChevronRight } from 'react-icons/fa';
+import { CIUDAD_FIJA, PROVINCIA_FIJA, construirDireccion } from '@/lib/utils/direccion';
 // Componente para un campo de información, ahora con una prop `isEditable`
 const InfoField = ({ label, value, icon, name, isEditing, onChange, isEditable = true }) => {
     const Icon = icon;
@@ -129,7 +130,12 @@ export default function MisDatosPage() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setNotification({ message: '', type: '' });
-        const result = await actualizarPerfil(user.uid, formData);
+        const result = await actualizarPerfil(user.uid, {
+            ...formData,
+            direccion: construirDireccion(formData),
+            provincia: formData.provincia || PROVINCIA_FIJA,
+            ciudad: formData.ciudad || CIUDAD_FIJA,
+        });
         if (result.success) {
             // Actualizamos la vista solo con los datos que pueden cambiar
             const updatedViewData = { ...userData, ...result.updatedData };
@@ -195,7 +201,8 @@ export default function MisDatosPage() {
                             <InfoField label="Nombre" value={formData.nombre} icon={FaUser} name="nombre" isEditing={isEditing} onChange={handleInputChange} isEditable={false} />
                             <InfoField label="Apellido" value={formData.apellido} icon={FaUser} name="apellido" isEditing={isEditing} onChange={handleInputChange} isEditable={false} />
                             <InfoField label="DNI" value={formData.dni} icon={FaIdCard} name="dni" isEditing={isEditing} onChange={handleInputChange} isEditable={false} />
-                            <InfoField label="Dirección" value={formData.direccion} icon={FaMapMarkerAlt} name="direccion" isEditing={isEditing} onChange={handleInputChange} />
+                            <InfoField label="Email registrado" value={formData.email || user?.email} icon={FaUser} name="email" isEditing={false} onChange={handleInputChange} isEditable={false} />
+                            <InfoField label="Domicilio" value={formData.direccion || construirDireccion(formData)} icon={FaMapMarkerAlt} name="direccion" isEditing={false} onChange={handleInputChange} isEditable={false} />
                         </div>
                     </div>
 

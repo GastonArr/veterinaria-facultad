@@ -81,7 +81,7 @@ export async function signInWithGoogle(idToken) {
 }
 
 export async function registerWithEmail(userData) {
-  const { email, password, nombre, apellido, dni, telefonoPrincipal, telefonoSecundario, direccion, nombreContactoEmergencia, telefonoContactoEmergencia } = userData;
+  const { email, password, nombre, apellido, dni, telefonoPrincipal, telefonoSecundario, direccion, provincia, ciudad, barrio, calle, altura, nombreContactoEmergencia, telefonoContactoEmergencia } = userData;
 
   if (!email || !password || !nombre || !apellido || !dni) {
     return { success: false, error: 'Faltan datos esenciales para el registro.' };
@@ -111,6 +111,11 @@ export async function registerWithEmail(userData) {
       telefonoPrincipal,
       telefonoSecundario: telefonoSecundario || '',
       direccion,
+      provincia: provincia || 'La Pampa',
+      ciudad: ciudad || 'Santa Rosa',
+      barrio: barrio || '',
+      calle: calle || '',
+      altura: altura || '',
       nombreContactoEmergencia,
       telefonoContactoEmergencia,
       role: userRole,
@@ -151,6 +156,12 @@ const validacionDatosCompletarPerfil = (data) => {
       telefonoPrincipal,
       telefonoSecundario,
       direccion,
+      email,
+      provincia,
+      ciudad,
+      barrio,
+      calle,
+      altura,
       nombreContactoEmergencia,
       telefonoContactoEmergencia
   } = data;
@@ -165,6 +176,9 @@ const validacionDatosCompletarPerfil = (data) => {
   else if (!/^\d{7,8}$/.test(dni)) errors.dni = 'El DNI debe tener entre 7 y 8 números.';
 
   if (!direccion || !direccion.trim()) errors.direccion = 'La dirección es obligatoria.';
+  if (!barrio || !barrio.trim()) errors.barrio = 'El barrio es obligatorio.';
+  if (!calle || !calle.trim()) errors.calle = 'La calle es obligatoria.';
+  if (!altura || !altura.toString().trim()) errors.altura = 'La altura es obligatoria.';
 
   if (!telefonoPrincipal || !telefonoPrincipal.trim()) errors.telefonoPrincipal = 'El teléfono principal es obligatorio.';
   else if (!/^\d{10,15}$/.test(telefonoPrincipal)) errors.telefonoPrincipal = 'El teléfono debe tener entre 10 y 15 números.';
@@ -201,6 +215,12 @@ export async function completarPerfil(userId, userData) {
     telefonoPrincipal, 
     telefonoSecundario, 
     direccion, 
+    email,
+    provincia,
+    ciudad,
+    barrio,
+    calle,
+    altura,
     nombreContactoEmergencia, 
     telefonoContactoEmergencia 
   } = userData;
@@ -225,6 +245,12 @@ export async function completarPerfil(userId, userData) {
       telefonoPrincipal,
       telefonoSecundario: telefonoSecundario || '',
       direccion,
+      email: email || '',
+      provincia: provincia || 'La Pampa',
+      ciudad: ciudad || 'Santa Rosa',
+      barrio: barrio || '',
+      calle: calle || '',
+      altura: altura || '',
       nombreContactoEmergencia,
       telefonoContactoEmergencia,
       role: userRole,
@@ -269,6 +295,9 @@ export async function actualizarPerfil(userId, userData) {
     telefonoPrincipal, 
     telefonoSecundario, 
     direccion, 
+    barrio,
+    calle,
+    altura,
     nombreContactoEmergencia, 
     telefonoContactoEmergencia 
   } = userData;
@@ -277,6 +306,9 @@ export async function actualizarPerfil(userId, userData) {
     telefonoPrincipal,
     telefonoSecundario: telefonoSecundario || '',
     direccion,
+    barrio: barrio || '',
+    calle: calle || '',
+    altura: altura || '',
     nombreContactoEmergencia,
     telefonoContactoEmergencia,
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),

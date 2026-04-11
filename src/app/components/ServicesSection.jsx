@@ -1,7 +1,7 @@
 
 'use client';
 
-import { FaStethoscope, FaCut, FaShoppingCart, FaHeart } from 'react-icons/fa';
+import { FaStethoscope, FaCut, FaHeart } from 'react-icons/fa';
 
 const ServiceCard = ({ icon, title, description, href }) => {
     const Icon = icon;
@@ -24,7 +24,7 @@ export default function ServicesSection() {
                     <h2 className="text-4xl font-extrabold text-gray-900">Nuestros Servicios</h2>
                     <p className="text-lg text-gray-600 mt-4 max-w-2xl mx-auto">Todo lo que necesitas para el bienestar de tu mascota en un solo lugar.</p>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     <ServiceCard 
                         icon={FaStethoscope}
                         title="Consultas Veterinarias"
@@ -36,12 +36,6 @@ export default function ServicesSection() {
                         title="Peluquería Canina"
                         description="Estilo, higiene y cuidado para que tu perro luzca y se sienta genial. Ofrecemos servicio con transporte."
                         href="/turnos/peluqueria"
-                    />
-                    <ServiceCard 
-                        icon={FaShoppingCart}
-                        title="Tienda de Productos"
-                        description="Encuentra alimentos, juguetes y todos los accesorios que tu compañero necesita para una vida feliz."
-                        href="/tienda"
                     />
                     <ServiceCard 
                         icon={FaHeart}
