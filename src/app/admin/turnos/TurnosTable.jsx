@@ -21,7 +21,16 @@ export default function TurnosTable({ turnos, onUpdate, isUpdating, currentView,
   };
 
   const handleAction = (turno, newStatus) => {
-    onUpdate(turno.userId, turno.mascotaId, turno.id, newStatus);
+    let motivoCancelacion = '';
+
+    if (newStatus === 'cancelado') {
+      motivoCancelacion = window.prompt('Ingresá el motivo de cancelación para informar al cliente:')?.trim() || '';
+      if (!motivoCancelacion) {
+        return;
+      }
+    }
+
+    onUpdate(turno.userId, turno.mascotaId, turno.id, newStatus, motivoCancelacion);
   };
 
   const formattedDate = (fecha) => {

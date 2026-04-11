@@ -30,7 +30,16 @@ function TurnoCard({ turno, onUpdate, isUpdating, currentView, onDocumentar }) {
   const cardBorder = { clinica: 'border-blue-500', peluqueria: 'border-pink-500' };
 
   const handleAction = (newStatus) => {
-    onUpdate(turno.userId, turno.mascotaId, turno.id, newStatus);
+    let motivoCancelacion = '';
+
+    if (newStatus === 'cancelado') {
+      motivoCancelacion = window.prompt('Ingresá el motivo de cancelación para informar al cliente:')?.trim() || '';
+      if (!motivoCancelacion) {
+        return;
+      }
+    }
+
+    onUpdate(turno.userId, turno.mascotaId, turno.id, newStatus, motivoCancelacion);
   };
 
   const formattedDate = () => {
@@ -106,9 +115,9 @@ export default function AdminTurnosDashboard() {
     cargarTurnos();
   }, []);
 
-  const handleUpdateStatus = (userId, mascotaId, turnoId, newStatus) => {
+  const handleUpdateStatus = (userId, mascotaId, turnoId, newStatus, motivoCancelacion = '') => {
     startTransition(async () => {
-      const result = await updateTurnoStatus({ userId, mascotaId, turnoId, newStatus });
+      const result = await updateTurnoStatus({ userId, mascotaId, turnoId, newStatus, motivoCancelacion });
       if (result.success) await cargarTurnos();
       else setError(result.error);
     });
