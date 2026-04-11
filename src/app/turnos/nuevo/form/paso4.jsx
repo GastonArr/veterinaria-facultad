@@ -130,7 +130,13 @@ export default function Paso4() {
         if (necesitaTraslado) {
             setIsSubmitting(true);
             const fechaPeluqueria = necesitaHorarioPeluqueria ? horarioPeluqueria.fecha : null;
-            const mascotasParaTraslado = selectedMascotas.filter(m => motivosPorMascota[m.id]?.peluqueria);
+            const mascotasParaTraslado = selectedMascotas
+                .filter(m => motivosPorMascota[m.id]?.peluqueria)
+                .map((mascota) => ({
+                    id: mascota.id,
+                    nombre: mascota.nombre,
+                    tamaño: mascota.tamaño,
+                }));
 
             if (fechaPeluqueria && mascotasParaTraslado.length > 0) {
                  const result = await verificarDisponibilidadTrasladoAction({
