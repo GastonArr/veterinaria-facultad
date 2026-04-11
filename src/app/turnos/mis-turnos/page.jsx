@@ -102,6 +102,7 @@ const TurnoCard = ({ turno, compactarCancelado = false }) => {
 export default function MisTurnosPage() {
     const { user } = useAuth();
     const [turnos, setTurnos] = useState({ proximos: [], historial: [] });
+    const [mostrarCancelados, setMostrarCancelados] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -190,6 +191,9 @@ export default function MisTurnosPage() {
             );
         }
 
+        const historialNoCancelados = turnos.historial.filter((turno) => turno.estado !== 'cancelado');
+        const historialCancelados = turnos.historial.filter((turno) => turno.estado === 'cancelado');
+
         return (
             <div className="space-y-12">
                 <section>
@@ -201,10 +205,51 @@ export default function MisTurnosPage() {
                     ) : (<p className="text-gray-500 italic">No tienes turnos próximos.</p>)}
                 </section>
                 <section>
-                     <h2 className="flex items-center text-2xl font-bold text-gray-700 mb-4"><FaHistory className="mr-3 text-gray-500"/>Historial</h2>
+                    <h2 className="flex items-center text-2xl font-bold text-gray-700 mb-4"><FaHistory className="mr-3 text-gray-500"/>Historial</h2>
                     {turnos.historial.length > 0 ? (
-                        <div className="space-y-4">
-                            {turnos.historial.map(turno => <TurnoCard key={turno.id} turno={turno} compactarCancelado={turno.estado === 'cancelado'} />)}
+                        <div className="space-y-5">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                                    <p className="text-sm text-gray-500">Atendidos / finalizados</p>
+                                    <p className="text-2xl font-bold text-gray-800">{historialNoCancelados.length}</p>
+                                </div>
+                                <div className="bg-white border border-red-100 rounded-lg p-4 shadow-sm">
+                                    <p className="text-sm text-red-600">Turnos cancelados</p>
+                                    <p className="text-2xl font-bold text-red-700">{historialCancelados.length}</p>
+                                </div>
+                            </div>
+
+                            {historialNoCancelados.length > 0 ? (
+                                <div className="space-y-4">
+                                    {historialNoCancelados.map(turno => <TurnoCard key={turno.id} turno={turno} />)}
+                                </div>
+                            ) : (
+                                <p className="text-gray-500 italic">No hay turnos finalizados en tu historial.</p>
+                            )}
+
+                            {historialCancelados.length > 0 && (
+                                <div className="bg-white border border-red-100 rounded-lg p-4 shadow-sm">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div>
+                                            <h3 className="text-lg font-bold text-gray-800">Cancelados</h3>
+                                            <p className="text-sm text-gray-500">Podés revisarlos cuando quieras.</p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setMostrarCancelados((prev) => !prev)}
+                                            className="inline-flex items-center px-4 py-2 rounded-lg bg-red-50 text-red-700 font-semibold hover:bg-red-100 transition-colors"
+                                        >
+                                            {mostrarCancelados ? 'Ocultar cancelados' : `Ver cancelados (${historialCancelados.length})`}
+                                        </button>
+                                    </div>
+
+                                    {mostrarCancelados && (
+                                        <div className="space-y-4 mt-4 pt-4 border-t border-red-100">
+                                            {historialCancelados.map(turno => <TurnoCard key={turno.id} turno={turno} compactarCancelado />)}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     ) : (<p className="text-gray-500 italic">No hay turnos en tu historial.</p>)}
                 </section>
