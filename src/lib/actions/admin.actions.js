@@ -14,6 +14,28 @@ const safeToISOString = (timestamp) => {
   return (typeof timestamp === 'string') ? timestamp : null;
 };
 
+// Convierte recursivamente objetos de Firestore (Timestamp, arrays, mapas)
+// a valores serializables para poder pasarlos de Server Components a Client Components.
+const serializeFirestoreValue = (value) => {
+  if (value === null || value === undefined) return value;
+
+  if (typeof value?.toDate === 'function') {
+    return value.toDate().toISOString();
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(serializeFirestoreValue);
+  }
+
+  if (typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, nestedValue]) => [key, serializeFirestoreValue(nestedValue)])
+    );
+  }
+
+  return value;
+};
+
 export async function getAllUsers() {
   try {
     const usersSnapshot = await db.collection('users').get();
@@ -26,8 +48,7 @@ export async function getAllUsers() {
       const data = doc.data();
       return {
         id: doc.id,
-        ...data,
-        createdAt: data.createdAt && data.createdAt.toDate ? data.createdAt.toDate().toISOString() : null,
+        ...serializeFirestoreValue(data),
       };
     });
     
