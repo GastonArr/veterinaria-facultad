@@ -66,6 +66,23 @@ export default function NuevoTurnoWizardPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    const normalizeFirestoreValue = (value) => {
+        if (value === null || value === undefined) return value;
+        if (Array.isArray(value)) return value.map(normalizeFirestoreValue);
+        if (typeof value === 'object') {
+            if (typeof value.toDate === 'function') {
+                return value.toDate().toISOString();
+            }
+
+            const normalizedObject = {};
+            for (const [key, nestedValue] of Object.entries(value)) {
+                normalizedObject[key] = normalizeFirestoreValue(nestedValue);
+            }
+            return normalizedObject;
+        }
+        return value;
+    };
+
     useEffect(() => {
         if (!authLoading && !user) {
             router.push('/login?redirectTo=/turnos/nuevo');
@@ -83,7 +100,10 @@ export default function NuevoTurnoWizardPage() {
                         getDiasNoLaborales(),
                     ]);
 
-                    const mascotas = mascotasSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    const mascotas = mascotasSnap.docs.map((doc) => ({
+                        id: doc.id,
+                        ...normalizeFirestoreValue(doc.data()),
+                    }));
                     
                     let catalogoServicios = { clinica: [], peluqueria: [] };
                     if (serviciosSnap.exists()) {

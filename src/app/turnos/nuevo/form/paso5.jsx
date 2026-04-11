@@ -24,19 +24,26 @@ export default function Paso5() {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    const buildPlainTurnoPayload = () => ({
+        selectedMascotas: selectedMascotas.map((mascota) => ({
+            id: mascota.id,
+            nombre: mascota.nombre,
+            tamaño: mascota.tamaño,
+        })),
+        motivosPorMascota,
+        specificServices,
+        horarioClinica,
+        horarioPeluqueria,
+        necesitaTraslado,
+        metodoPago,
+        catalogoServicios,
+    });
+
     const handleConfirmarTurnos = async () => {
         setIsSubmitting(true);
         try {
-            const result = await crearTurnos(user?.uid, {
-                selectedMascotas,
-                motivosPorMascota,
-                specificServices,
-                horarioClinica,
-                horarioPeluqueria,
-                necesitaTraslado,
-                metodoPago,
-                catalogoServicios
-            });
+            const payload = buildPlainTurnoPayload();
+            const result = await crearTurnos(user?.uid, payload);
 
             if (result.success) {
                 toast.success('¡Turnos creados con éxito!');
