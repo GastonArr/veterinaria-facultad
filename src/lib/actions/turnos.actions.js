@@ -53,10 +53,10 @@ export async function verificarDisponibilidadTrasladoAction({ fecha, nuevasMasco
     }
 }
 
-export async function crearTurnos(user, data) {
+export async function crearTurnos(userId, data) {
     const { selectedMascotas, motivosPorMascota, specificServices, horarioClinica, horarioPeluqueria, necesitaTraslado, metodoPago, catalogoServicios } = data;
 
-    if (!user || !user.uid) {
+    if (!userId) {
         return { success: false, error: 'Usuario no autenticado.' };
     }
 
@@ -91,7 +91,7 @@ export async function crearTurnos(user, data) {
 
                 const horarioFinal = fechaTurnoClinica.format('HH:mm');
 
-                const turnoRef = firestore.collection('users').doc(user.uid).collection('mascotas').doc(mascota.id).collection('turnos').doc();
+                const turnoRef = firestore.collection('users').doc(userId).collection('mascotas').doc(mascota.id).collection('turnos').doc();
                 const turnoClinicaData = {
                     fecha: admin.firestore.Timestamp.fromDate(fechaTurnoClinica.toDate()),
                     horario: horarioFinal, 
@@ -106,7 +106,7 @@ export async function crearTurnos(user, data) {
                     estado: 'pendiente', 
                     creadoEn: admin.firestore.FieldValue.serverTimestamp(), 
                     necesitaTraslado: false,
-                    clienteId: user.uid
+                    clienteId: userId
                 };
                 writePromises.push(turnoRef.set(turnoClinicaData));
                 
@@ -129,13 +129,13 @@ export async function crearTurnos(user, data) {
                 let fechaTurnoPeluqueria = dayjs.tz(horarioPeluqueria.fecha, timeZone);
                 fechaTurnoPeluqueria = fechaTurnoPeluqueria.hour(horarioPeluqueria.turno === 'mañana' ? 9 : 14).minute(0).second(0);
 
-                const turnoRef = firestore.collection('users').doc(user.uid).collection('mascotas').doc(mascota.id).collection('turnos').doc();
+                const turnoRef = firestore.collection('users').doc(userId).collection('mascotas').doc(mascota.id).collection('turnos').doc();
                 const turnoPeluqueriaData = {
                     fecha: admin.firestore.Timestamp.fromDate(fechaTurnoPeluqueria.toDate()),
                     horario: horarioPeluqueria.turno, tipo: 'peluqueria', mascotaId: mascota.id, mascotaNombre: mascota.nombre, mascotaTamaño: mascota.tamaño,
                     servicioId: servicioId, servicioNombre: servicioData.nombre, precio: precio, necesitaTraslado: necesitaTraslado,
                     metodoPago: metodoPago, estado: 'pendiente', creadoEn: admin.firestore.FieldValue.serverTimestamp(),
-                    clienteId: user.uid
+                    clienteId: userId
                 };
                 writePromises.push(turnoRef.set(turnoPeluqueriaData));
             }

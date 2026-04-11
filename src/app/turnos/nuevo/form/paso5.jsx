@@ -27,7 +27,7 @@ export default function Paso5() {
     const handleConfirmarTurnos = async () => {
         setIsSubmitting(true);
         try {
-            const result = await crearTurnos(user, {
+            const result = await crearTurnos(user?.uid, {
                 selectedMascotas,
                 motivosPorMascota,
                 specificServices,
