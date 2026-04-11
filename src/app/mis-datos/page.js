@@ -7,8 +7,6 @@ import { db } from '@/lib/firebase';
 import { actualizarPerfil } from '@/lib/actions/user.actions.js';
 import SubHeader from '@/app/components/SubHeader';
 import { FaUser, FaIdCard, FaPhone, FaMapMarkerAlt, FaExclamationTriangle, FaSave, FaEdit, FaTimes, FaKey } from 'react-icons/fa';
-import Link from 'next/link';
-import { FaUserShield, FaChevronRight } from 'react-icons/fa';
 import { BARRIOS_SANTA_ROSA, CIUDAD_FIJA, PROVINCIA_FIJA, construirDireccion } from '@/lib/utils/direccion';
 
 const BARRIO_OTRO_VALUE = '__OTRO_BARRIO__';
@@ -39,36 +37,6 @@ const InfoField = ({ label, value, icon, name, isEditing, onChange, isEditable =
     );
 };
 
-const RoleSpecificButton = ({ role }) => {
-    const roles = {
-        admin: { href: '/admin', label: 'Panel de Administrador' },
-        peluqueria: { href: '/admin/empleados/peluqueria', label: 'Portal de Peluquería' },
-        transporte: { href: '/admin/empleados/transporte', label: 'Portal de Transporte' }
-    };
-
-    if (!role || !roles[role]) {
-        return null;
-    }
-
-    const { href, label } = roles[role];
-
-    return (
-        <div className="mb-8">
-            <Link
-                href={href}
-                className="flex items-center justify-between w-full p-4 text-left bg-white rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 group"
-            >
-                <div className="flex items-center gap-4">
-                    <div className="p-3 bg-violet-100 rounded-xl">
-                        <FaUserShield className="text-violet-600" size={22} />
-                    </div>
-                    <span className="text-lg font-bold text-gray-800">{label}</span>
-                </div>
-                <FaChevronRight className="text-gray-400 group-hover:text-violet-600 transition-colors" size={20} />
-            </Link>
-        </div>
-    );
-};
 
 const Notification = ({ message, type, onClose }) => {
     if (!message) return null;
@@ -242,8 +210,6 @@ export default function MisDatosPage() {
     return (
         <>
             <SubHeader title="Mis Datos" />
-            {userData && <RoleSpecificButton role={userData.role} />}
-
             <main className="max-w-4xl mx-auto p-4 md:p-8">
                 <Notification message={notification.message} type={notification.type} onClose={() => setNotification({ message: '', type: '' })} />
 

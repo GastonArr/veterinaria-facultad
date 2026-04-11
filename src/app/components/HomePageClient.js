@@ -5,8 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import LandingPage from './LandingPage';
 import Dashboard from './Dashboard';
 import SubHeader from './SubHeader';
-import Link from 'next/link';
-import { FaStethoscope, FaCut } from 'react-icons/fa';
+import RolePortalHero from './RolePortalHero';
 
 export default function HomePageClient({ serverComponents }) {
   const { user, loading } = useAuth();
@@ -20,10 +19,13 @@ export default function HomePageClient({ serverComponents }) {
   }
 
   if (user) {
+    const displayIdentifier = user.displayName?.split(' ')[0] || user.email?.split('@')[0] || 'Equipo';
+
     return (
       <>
         <SubHeader />
         <Dashboard>
+          <RolePortalHero role={user.role} name={displayIdentifier} />
 
           {/* Sección de Adopciones */}
           <section className="py-12 md:py-16 px-4 md:px-8">
