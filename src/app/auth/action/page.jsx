@@ -4,7 +4,6 @@ import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
-import PasswordStrengthMeter, { validatePassword } from '@/app/components/PasswordStrengthMeter';
 
 function ResetPasswordPage() {
     const router = useRouter();
@@ -60,8 +59,8 @@ function ResetPasswordPage() {
         e.preventDefault();
         setError(null);
 
-        if (!validatePassword(newPassword)) {
-            setError('La contraseña no cumple con los requisitos de seguridad.');
+        if (newPassword.length < 6) {
+            setError('La contraseña debe tener al menos 6 caracteres.');
             return;
         }
 
@@ -124,9 +123,6 @@ function ResetPasswordPage() {
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
                         />
-                        <div className="mt-3">
-                            <PasswordStrengthMeter password={newPassword} />
-                        </div>
                     </div>
                     <div>
                         <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">Confirmar Contraseña</label>
