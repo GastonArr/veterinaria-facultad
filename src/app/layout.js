@@ -3,7 +3,6 @@
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Header from "@/app/components/Header";
-import BackButton from "@/app/components/BackButton";
 
 
 export default function RootLayout({ children }) {
@@ -13,7 +12,6 @@ export default function RootLayout({ children }) {
         <AuthProvider>
           <Header />
           <main className="flex-grow w-full">
-            <BackButton />
             {children}
           </main>
         </AuthProvider>
