@@ -105,7 +105,6 @@ export async function getTurnosByUserId({ userId }) {
         estado: turno.estado || 'desconocido',
         tipo: turno.tipo || 'general',
         fecha: fechaTurno.toISOString(),
-        motivoCancelacion: turno.motivoCancelacion || '',
         mascota: { nombre: mascotaNombre }
       };
 
