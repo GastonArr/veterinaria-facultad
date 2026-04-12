@@ -134,7 +134,18 @@ export default function ServiciosPage() {
                             permitirTurnosDiasEspecialesInicial={permitirTurnosDiasEspeciales}
                         />
 
-                        <ListaServicios servicios={servicios} config={config} onUpdate={fetchData} />
+                        <section className="mt-10 pt-8 border-t-2 border-gray-300">
+                            <div className="mb-5">
+                                <h2 className="text-2xl font-bold text-gray-900">Gestión de servicios</h2>
+                                <p className="mt-1 text-sm text-gray-600">
+                                    Administra, edita o elimina los servicios disponibles.
+                                </p>
+                            </div>
+
+                            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-1">
+                                <ListaServicios servicios={servicios} config={config} onUpdate={fetchData} />
+                            </div>
+                        </section>
                     </>
                 )}
             </div>
