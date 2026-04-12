@@ -12,7 +12,7 @@ dayjs.extend(timezone);
 
 const db = admin.firestore();
 
-export async function actualizarDiasNoLaborales({ nuevasFechas }) {
+export async function actualizarDiasNoLaborales({ nuevasFechas, permitirTurnosDiasEspeciales }) {
   if (!Array.isArray(nuevasFechas)) {
     return { success: false, error: 'El formato de los datos proporcionados es incorrecto.' };
   }
@@ -64,7 +64,10 @@ export async function actualizarDiasNoLaborales({ nuevasFechas }) {
         }
       }
       // Se guarda la lista de fechas únicas en la base de datos
-      transaction.set(configRef, { diasNoDisponibles: fechasUnicas }, { merge: true });
+      transaction.set(configRef, {
+        diasNoDisponibles: fechasUnicas,
+        permitirTurnosDiasEspeciales: !!permitirTurnosDiasEspeciales
+      }, { merge: true });
     });
 
     console.log(`Operación completada. Se han reprogramado un total de ${reprogramadosCount} turnos.`);

@@ -7,7 +7,7 @@ import Modal from '@/app/components/Modal';
 import FormularioNuevoServicio from './FormularioNuevoServicio';
 import ListaServicios from './ListaServicios';
 import DisponibilidadCalendario from './DisponibilidadCalendario';
-import { obtenerServicios, obtenerConfiguracionServicios, toggleCategoriaActiva, obtenerDiasBloqueados } from '@/lib/actions/servicios.actions.js';
+import { obtenerServicios, obtenerConfiguracionServicios, toggleCategoriaActiva, obtenerConfiguracionDisponibilidad } from '@/lib/actions/servicios.actions.js';
 
 const InterruptorCategoria = ({ nombre, categoria, activo, onToggle }) => {
     return (
@@ -32,20 +32,22 @@ export default function ServiciosPage() {
     const [servicios, setServicios] = useState(null);
     const [config, setConfig] = useState(null);
     const [diasBloqueados, setDiasBloqueados] = useState([]);
+    const [permitirTurnosDiasEspeciales, setPermitirTurnosDiasEspeciales] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     const fetchData = async () => {
         try {
             setLoading(true);
-            const [serviciosData, configData, diasBloqueadosData] = await Promise.all([
+            const [serviciosData, configData, disponibilidadData] = await Promise.all([
                 obtenerServicios(),
                 obtenerConfiguracionServicios(),
-                obtenerDiasBloqueados()
+                obtenerConfiguracionDisponibilidad()
             ]);
             setServicios(serviciosData);
             setConfig(configData);
-            setDiasBloqueados(diasBloqueadosData);
+            setDiasBloqueados(disponibilidadData.diasNoDisponibles);
+            setPermitirTurnosDiasEspeciales(disponibilidadData.permitirTurnosDiasEspeciales);
         } catch (err) {
             setError(err.message);
         } finally {
@@ -87,8 +89,8 @@ export default function ServiciosPage() {
 
                 <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Gestión de Servicios</h1>
-                        <p className="mt-1 text-md text-gray-600">Activa o desactiva categorías y administra los servicios ofrecidos.</p>
+                        <h1 className="text-3xl font-bold text-gray-900">Calendario y Servicio</h1>
+                        <p className="mt-1 text-md text-gray-600">Gestión de días y servicios.</p>
                     </div>
                     <button
                         onClick={() => setModalOpen(true)}
@@ -127,7 +129,10 @@ export default function ServiciosPage() {
                             )}
                         </div>
 
-                        <DisponibilidadCalendario diasBloqueados={diasBloqueados} />
+                        <DisponibilidadCalendario
+                            diasBloqueados={diasBloqueados}
+                            permitirTurnosDiasEspecialesInicial={permitirTurnosDiasEspeciales}
+                        />
 
                         <ListaServicios servicios={servicios} config={config} onUpdate={fetchData} />
                     </>

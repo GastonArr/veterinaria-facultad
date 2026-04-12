@@ -57,6 +57,7 @@ export default function Paso4() {
         horarioPeluqueria, setHorarioPeluqueria,
         necesitaTraslado, setNecesitaTraslado,
         diasNoLaborales,
+        permitirTurnosDiasEspeciales,
         nextStep
     } = useTurnoWizard();
 
@@ -113,12 +114,12 @@ export default function Paso4() {
         twoWeeksFromNow.setDate(today.getDate() + 15);
         
         return [
-            ...diasNoLaborales,
+            ...(permitirTurnosDiasEspeciales ? [] : diasNoLaborales),
             { before: tomorrow },
             { after: twoWeeksFromNow },
-            { dayOfWeek: [0, 6] }
+            ...(permitirTurnosDiasEspeciales ? [] : [{ dayOfWeek: [0, 6] }])
         ];
-    }, [diasNoLaborales]);
+    }, [diasNoLaborales, permitirTurnosDiasEspeciales]);
     
     const modifiers = { noLaboral: diasNoLaborales };
     const modifiersStyles = { noLaboral: { color: 'white', backgroundColor: '#ef4444', borderRadius: '50%'} };

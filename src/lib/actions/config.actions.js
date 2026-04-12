@@ -5,7 +5,8 @@ import admin from '@/lib/firebaseAdmin';
  * @action getDiasNoLaborales
  * @description Obtiene todos los días marcados como no laborales por un administrador.
  * Lee el array 'diasNoDisponibles' del documento 'disponibilidad' en la colección 'configuracion'.
- * @returns {Promise<{success: boolean, data?: string[], error?: string}>} Un array de strings (YYYY-MM-DD) correspondientes a los días bloqueados.
+ * @returns {Promise<{success: boolean, data?: string[], permitirTurnosDiasEspeciales?: boolean, error?: string}>}
+ * Un array de strings (YYYY-MM-DD) correspondientes a los días bloqueados y si se permiten turnos en fines de semana/feriados.
  */
 export async function getDiasNoLaborales() {
   try {
@@ -15,7 +16,7 @@ export async function getDiasNoLaborales() {
 
     if (!docSnap.exists) {
       console.log("El documento 'disponibilidad' no existe en la colección 'configuracion'. Se retorna un array vacío.");
-      return { success: true, data: [] };
+      return { success: true, data: [], permitirTurnosDiasEspeciales: false };
     }
 
     const data = docSnap.data();
@@ -23,7 +24,11 @@ export async function getDiasNoLaborales() {
     // El cliente es responsable de interpretar estos strings en su zona horaria local.
     const dateStrings = data.diasNoDisponibles || [];
     
-    return { success: true, data: dateStrings };
+    return {
+      success: true,
+      data: dateStrings,
+      permitirTurnosDiasEspeciales: !!data.permitirTurnosDiasEspeciales,
+    };
 
   } catch (error) {
     console.error("Error definitivo en getDiasNoLaborales:", error);

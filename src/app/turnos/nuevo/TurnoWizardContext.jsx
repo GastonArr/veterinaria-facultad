@@ -13,7 +13,13 @@ export const useTurnoWizard = () => {
 };
 
 export const TurnoWizardProvider = ({ children, initialData }) => {
-    const { mascotas = [], catalogoServicios = {}, configServicios = {}, diasNoLaborales = [] } = initialData;
+    const {
+        mascotas = [],
+        catalogoServicios = {},
+        configServicios = {},
+        diasNoLaborales = [],
+        permitirTurnosDiasEspeciales = false
+    } = initialData;
 
     // States from the original component
     const [step, setStep] = useState(1);
@@ -69,6 +75,7 @@ export const TurnoWizardProvider = ({ children, initialData }) => {
         catalogoServicios,
         configServicios,
         diasNoLaborales,
+        permitirTurnosDiasEspeciales,
 
         // Derived state
         selectedMascotas,
