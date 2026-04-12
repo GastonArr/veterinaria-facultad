@@ -16,7 +16,10 @@ const toLocalDateString = (date) => {
     return `${year}-${month}-${day}`;
 }
 
-export default function DisponibilidadCalendario({ diasBloqueados: initialDiasBloqueados = [] }) {
+export default function DisponibilidadCalendario({
+    diasBloqueados: initialDiasBloqueados = [],
+    permitirTurnosDiasEspecialesInicial = false,
+}) {
     // --- CORRECCIÓN DE ZONA HORARIA ---
     // Se inicializan las fechas como objetos Date en la zona horaria LOCAL del navegador.
     const initialDates = initialDiasBloqueados.map(dateStr => {
@@ -25,29 +28,20 @@ export default function DisponibilidadCalendario({ diasBloqueados: initialDiasBl
     });
 
     const [selectedDays, setSelectedDays] = useState(initialDates);
+    const [permitirTurnosDiasEspeciales, setPermitirTurnosDiasEspeciales] = useState(permitirTurnosDiasEspecialesInicial);
     const [isPending, startTransition] = useTransition();
 
-    const handleDayClick = (day, { selected }) => {
-        // El objeto 'day' ya viene en la zona horaria local. No se necesita conversión.
-        // Se normaliza a medianoche para evitar problemas de comparación de horas.
-        const dayAtMidnight = new Date(day.getFullYear(), day.getMonth(), day.getDate());
-
-        if (selected) {
-            setSelectedDays(prev => prev.filter(d => d.getTime() !== dayAtMidnight.getTime()));
-        } else {
-            setSelectedDays(prev => [...prev, dayAtMidnight]);
-        }
-    };
-
-    const handleGuardarCambios = () => {
-        // Se utiliza el helper que convierte la fecha LOCAL a string.
-        const nuevasFechas = selectedDays.map(toLocalDateString);
+    const guardarConfiguracion = (diasActualizados, permitirTurnos) => {
+        const nuevasFechas = diasActualizados.map(toLocalDateString);
 
         startTransition(async () => {
             const toastId = toast.loading('Guardando cambios y actualizando turnos...');
             
             try {
-                const result = await actualizarDiasNoLaborales({ nuevasFechas });
+                const result = await actualizarDiasNoLaborales({
+                    nuevasFechas,
+                    permitirTurnosDiasEspeciales: permitirTurnos,
+                });
 
                 if (result.success) {
                     let successMessage = '¡Calendario actualizado con éxito!';
@@ -66,8 +60,34 @@ export default function DisponibilidadCalendario({ diasBloqueados: initialDiasBl
         });
     };
 
+    const handleDayClick = (day, { selected }) => {
+        // El objeto 'day' ya viene en la zona horaria local. No se necesita conversión.
+        // Se normaliza a medianoche para evitar problemas de comparación de horas.
+        const dayAtMidnight = new Date(day.getFullYear(), day.getMonth(), day.getDate());
+
+        let nuevosDias = [];
+        if (selected) {
+            nuevosDias = selectedDays.filter(d => d.getTime() !== dayAtMidnight.getTime());
+        } else {
+            nuevosDias = [...selectedDays, dayAtMidnight];
+        }
+
+        setSelectedDays(nuevosDias);
+        guardarConfiguracion(nuevosDias, permitirTurnosDiasEspeciales);
+    };
+
+    const handleGuardarCambios = () => {
+        guardarConfiguracion(selectedDays, permitirTurnosDiasEspeciales);
+    };
+
+    const handleToggleDiasEspeciales = () => {
+        const nuevoEstado = !permitirTurnosDiasEspeciales;
+        setPermitirTurnosDiasEspeciales(nuevoEstado);
+        guardarConfiguracion(selectedDays, nuevoEstado);
+    };
+
     const footer = selectedDays.length > 0
-        ? `Días a bloquear: ${selectedDays.length}. No olvides guardar los cambios.`
+        ? `Días marcados para no abrir: ${selectedDays.length}.`
         : `Selecciona uno o más días para marcarlos como no disponibles.`;
 
     return (
@@ -79,10 +99,20 @@ export default function DisponibilidadCalendario({ diasBloqueados: initialDiasBl
             )}
             <h3 className="text-xl font-bold text-gray-800 mb-2">Gestión de Días No Laborables</h3>
             <p className="text-gray-600 mb-4">
-                Haz clic en las fechas para agregarlas o quitarlas de la lista de días no disponibles.
-                <br/>
-                <span className="font-semibold">Recuerda hacer clic en &quot;Guardar Cambios&quot; para aplicar la configuración.</span>
+                Marca en el calendario los días que no va abrir la veterinaria.
             </p>
+            <div className="mb-5 p-4 rounded-lg border bg-gray-50 flex items-center justify-between">
+                <div>
+                    <p className="font-semibold text-gray-800">Habilitar turnos en feriados y fines de semana</p>
+                    <p className="text-sm text-gray-600">Si lo activas, los usuarios podrán pedir turnos también en esos días.</p>
+                </div>
+                <button
+                    onClick={handleToggleDiasEspeciales}
+                    className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${permitirTurnosDiasEspeciales ? 'bg-green-600' : 'bg-gray-400'}`}
+                >
+                    <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${permitirTurnosDiasEspeciales ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
+            </div>
             <div className="flex flex-col items-center">
                 <DayPicker
                     mode="multiple"

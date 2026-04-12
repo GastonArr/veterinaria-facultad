@@ -60,6 +60,7 @@ function ReprogramarTurnoComponent() {
     const [slotsError, setSlotsError] = useState(null);
     const [success, setSuccess] = useState(false);
     const [diasNoLaborales, setDiasNoLaborales] = useState([]);
+    const [permitirTurnosDiasEspeciales, setPermitirTurnosDiasEspeciales] = useState(false);
 
     const turnoInfo = useMemo(() => ({
         turnoId: searchParams.get('turnoId'),
@@ -88,6 +89,7 @@ function ReprogramarTurnoComponent() {
 
             if (diasResult.success) {
                 setDiasNoLaborales(diasResult.data.map(d => new Date(`${d}T00:00:00`)));
+                setPermitirTurnosDiasEspeciales(!!diasResult.permitirTurnosDiasEspeciales);
             }
             setLoading(false);
         }
@@ -105,12 +107,12 @@ function ReprogramarTurnoComponent() {
         const fechaLimite = calcularFechaLimite(diasNoLaborales);
 
         return [
-            ...diasNoLaborales,
+            ...(permitirTurnosDiasEspeciales ? [] : diasNoLaborales),
             { before: tomorrow }, // No se puede reprogramar para hoy o días pasados
-            { dayOfWeek: [0, 6] }, // Domingo y Sábado
+            ...(permitirTurnosDiasEspeciales ? [] : [{ dayOfWeek: [0, 6] }]), // Domingo y Sábado
             { after: fechaLimite } // No se puede reprogramar después de 20 días hábiles
         ];
-    }, [diasNoLaborales]);
+    }, [diasNoLaborales, permitirTurnosDiasEspeciales]);
 
     const handleDaySelect = async (day, selectedDay, modifiers) => {
         if (!day || modifiers.disabled) {

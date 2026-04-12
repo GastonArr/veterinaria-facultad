@@ -97,6 +97,24 @@ export async function obtenerDiasBloqueados() {
     }
 }
 
+export async function obtenerConfiguracionDisponibilidad() {
+    try {
+        const doc = await disponibilidadRef.get();
+        if (!doc.exists) {
+            return { diasNoDisponibles: [], permitirTurnosDiasEspeciales: false };
+        }
+
+        const data = doc.data() || {};
+        return {
+            diasNoDisponibles: data.diasNoDisponibles || [],
+            permitirTurnosDiasEspeciales: !!data.permitirTurnosDiasEspeciales,
+        };
+    } catch (error) {
+        console.error("Error al obtener la configuración de disponibilidad:", error);
+        return { diasNoDisponibles: [], permitirTurnosDiasEspeciales: false };
+    }
+}
+
 /**
  * Añade una fecha a la lista de días no disponibles y cancela automáticamente los turnos agendados.
  * @param {string} fecha - La fecha a bloquear en formato YYYY-MM-DD.
@@ -181,4 +199,3 @@ export async function actualizarServicio(categoria, servicioId, data) {
         return { success: false, error: 'No se pudo actualizar el servicio.' };
     }
 }
-

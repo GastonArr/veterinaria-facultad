@@ -43,7 +43,7 @@ export default function AdminDashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <DashboardCard title="Turnos" description="Gestionar todas las citas" href="/admin/turnos" />
             <DashboardCard title="Clientes" description="Ver y administrar clientes" href="/admin/clientes" />
-            <DashboardCard title="Servicios" description="Configurar los servicios ofrecidos" href="/admin/servicios" />
+            <DashboardCard title="Calendario y Servicio" description="Gestión de días y servicios" href="/admin/servicios" />
             <DashboardCard title="Empleados" description="Gestión de roles de usuarios" href="/admin/empleados" />
         </div>
 

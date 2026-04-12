@@ -122,6 +122,7 @@ export default function NuevoTurnoWizardPage() {
                         catalogoServicios,
                         configServicios: configResult.data || {},
                         diasNoLaborales: diasResult.data ? diasResult.data.map(d => new Date(d)) : [],
+                        permitirTurnosDiasEspeciales: !!diasResult.permitirTurnosDiasEspeciales,
                     });
 
                 } catch (err) {
