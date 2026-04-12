@@ -99,7 +99,7 @@ export default function DisponibilidadCalendario({
             )}
             <h3 className="text-xl font-bold text-gray-800 mb-2">Gestión de Días No Laborables</h3>
             <p className="text-gray-600 mb-4">
-                Marca en el calendario los días que no va abrir la veterinaria.
+                Marca en el calendario los dias que la veterinaria no trabaja y guarda los cambios
             </p>
             <div className="mb-5 p-4 rounded-lg border bg-gray-50 flex items-center justify-between">
                 <div>
