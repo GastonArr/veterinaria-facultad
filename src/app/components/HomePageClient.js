@@ -6,6 +6,7 @@ import LandingPage from './LandingPage';
 import Dashboard from './Dashboard';
 import SubHeader from './SubHeader';
 import RolePortalHero from './RolePortalHero';
+import Link from 'next/link';
 
 export default function HomePageClient({ serverComponents }) {
   const { user, loading } = useAuth();
@@ -26,6 +27,16 @@ export default function HomePageClient({ serverComponents }) {
       <>
         {isOwner && <SubHeader />}
         <Dashboard canRequestTurn={isOwner}>
+          {!isOwner && (
+            <section className="mb-8 md:mb-10 flex justify-center">
+              <Link
+                href="/mis-datos"
+                className="inline-flex items-center rounded-xl bg-white px-6 py-3 text-base font-bold text-gray-800 shadow-md transition hover:-translate-y-0.5 hover:shadow-lg"
+              >
+                Ver mis datos
+              </Link>
+            </section>
+          )}
           <RolePortalHero role={user.role} name={displayIdentifier} />
 
           {/* Sección de Adopciones */}
