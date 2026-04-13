@@ -37,6 +37,11 @@ export default function TurnosTable({ turnos, onUpdate, isUpdating, currentView,
     }
   };
 
+  const canCancelTurno = (turno) => {
+    const estadosNoCancelables = ['cancelado', 'peluqueria finalizada', 'servicio terminado', 'finalizado'];
+    return currentView !== 'finalizados' && currentView !== 'paraProgramar' && !estadosNoCancelables.includes(turno.estado);
+  };
+
   const formattedDate = (fecha) => {
     const date = new Date(fecha);
     return date.toLocaleString('es-AR', {
@@ -107,7 +112,7 @@ export default function TurnosTable({ turnos, onUpdate, isUpdating, currentView,
                             <FaCheck />
                           </button>
                         )}
-                        {currentView !== 'finalizados' && currentView !== 'paraProgramar' && turno.estado !== 'cancelado' && (
+                        {canCancelTurno(turno) && (
                           <button onClick={() => handleCancelAction(turno)} className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors" title="Cancelar">
                             <FaTimes />
                           </button>
