@@ -76,10 +76,10 @@ const PeluqueriaClientView = ({ initialTurnos }) => {
     return (
         <div className="p-4 md:p-8 bg-white text-gray-900 min-h-screen">
             <div className="mb-6">
-                <Link href="/admin">
+                <Link href="/mis-datos">
                     <span className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors duration-200 cursor-pointer">
                         <FaArrowLeft className="mr-2" />
-                        Volver al Panel Principal
+                        Volver a Mis Datos
                     </span>
                 </Link>
             </div>
