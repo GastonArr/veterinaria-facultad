@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/lib/firebase';
 import { collection, doc, getDoc, getDocs, orderBy, query, updateDoc, addDoc } from 'firebase/firestore';
 import SubHeader from '@/app/components/SubHeader';
-import { FaSyringe, FaCalendarAlt, FaFileMedical, FaDog, FaCut, FaStethoscope, FaInfoCircle, FaTimes, FaHeartbeat, FaShieldAlt } from 'react-icons/fa';
+import { FaSyringe, FaCalendarAlt, FaPlus, FaFileMedical, FaDog, FaCut, FaStethoscope, FaInfoCircle, FaTimes, FaHeartbeat, FaShieldAlt } from 'react-icons/fa';
 
 // --- COMPONENTES DE DISEÑO --- //
 
@@ -494,6 +494,9 @@ export default function CarnetSanitarioPage({ params }) {
                                 <p className="text-slate-500 text-sm mt-2 font-medium">Timeline de vida de {mascota.nombre}.</p>
                             </div>
 
+                            <button onClick={() => setIsModalOpen(true)} className="hidden sm:flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-6 py-3 rounded-2xl font-bold shadow-lg transition-transform active:scale-95">
+                                <FaPlus /> Nuevo
+                            </button>
                         </div>
 
                         {/* Contenedor del Timeline */}
@@ -517,6 +520,12 @@ export default function CarnetSanitarioPage({ params }) {
                         </div>
                     </>
                 )}
+
+                <button
+                    onClick={() => setIsModalOpen(true)}
+                    className="sm:hidden fixed bottom-8 right-8 w-16 h-16 bg-slate-900 text-white rounded-2xl flex justify-center items-center text-2xl shadow-[0_10px_30px_rgba(15,23,42,0.4)] hover:bg-slate-800 active:scale-90 transition-all z-40 transform hover:-translate-y-1">
+                    <FaPlus />
+                </button>
             </main>
         </div>
     );

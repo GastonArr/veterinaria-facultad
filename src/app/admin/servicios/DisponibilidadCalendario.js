@@ -76,6 +76,10 @@ export default function DisponibilidadCalendario({
         guardarConfiguracion(nuevosDias, permitirTurnosDiasEspeciales);
     };
 
+    const handleGuardarCambios = () => {
+        guardarConfiguracion(selectedDays, permitirTurnosDiasEspeciales);
+    };
+
     const handleToggleDiasEspeciales = () => {
         const nuevoEstado = !permitirTurnosDiasEspeciales;
         setPermitirTurnosDiasEspeciales(nuevoEstado);
@@ -95,7 +99,7 @@ export default function DisponibilidadCalendario({
             )}
             <h3 className="text-xl font-bold text-gray-800 mb-2">Gestión de Días No Laborables</h3>
             <p className="text-gray-600 mb-4">
-                Marca en el calendario los dias que la veterinaria no trabaja
+                Marca en el calendario los dias que la veterinaria no trabaja y guarda los cambios
             </p>
             <div className="mb-5 p-4 rounded-lg border bg-gray-50 flex items-center justify-between">
                 <div>
@@ -125,6 +129,13 @@ export default function DisponibilidadCalendario({
                     }}
                     footer={<p className="text-center text-sm text-gray-500 mt-4">{footer}</p>}
                 />
+                <button 
+                    onClick={handleGuardarCambios} 
+                    disabled={isPending} 
+                    className="mt-6 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-300"
+                >
+                    {isPending ? 'Guardando...' : 'Guardar Cambios'}
+                </button>
             </div>
         </div>
     );
