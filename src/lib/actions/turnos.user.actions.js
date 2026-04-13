@@ -246,13 +246,13 @@ export async function getAvailableSlotsForReprogramming({ fecha, tipo, necesitaT
       let horariosDisponibles = [];
       if (tipo === 'clinica') {
           const todosLosHorarios = [];
-          for (let h = 9; h < 18; h++) {
+          for (let h = 9; h <= 22; h++) {
               todosLosHorarios.push(`${h.toString().padStart(2, '0')}:00`);
               todosLosHorarios.push(`${h.toString().padStart(2, '0')}:30`);
           }
           horariosDisponibles = todosLosHorarios.filter(h => !horariosOcupados.includes(h));
       } else if (tipo === 'peluqueria') {
-          const horariosPeluqueria = ['09:00', '10:00', '11:00', '12:00', '14:00', '15:00', '16:00'];
+          const horariosPeluqueria = ['09:00', '10:00', '11:00', '12:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00'];
           horariosDisponibles = horariosPeluqueria.filter(h => !horariosOcupados.includes(h));
       }
 
