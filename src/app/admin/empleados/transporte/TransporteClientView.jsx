@@ -6,6 +6,7 @@ import { updateTurnoStatusByEmpleado } from '@/lib/actions/turnos.empleado.actio
 // --- Componente para el Botón de Acción Dinámico del Transportista ---
 const ActionButton = ({ turno, onUpdate, isLoading }) => {
     const { estado, clienteId, mascotaId, id } = turno;
+    const terminalStates = ['servicio terminado', 'cancelado'];
 
     const actions = {
         confirmado: { text: 'Confirmar Traslado', newStatus: 'traslado confirmado', className: 'bg-emerald-600 hover:bg-emerald-700' },
@@ -20,6 +21,9 @@ const ActionButton = ({ turno, onUpdate, isLoading }) => {
     const action = actions[estado];
 
     if (!action) {
+        if (terminalStates.includes(estado)) {
+            return <span className="text-sm text-gray-500 italic">No hay</span>;
+        }
         return <span className="text-sm text-gray-500 italic">En espera</span>;
     }
 
