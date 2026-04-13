@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from 'react';
 import Link from 'next/link';
-import { FaArrowLeft, FaCalendarAlt, FaFileMedical, FaTrash } from 'react-icons/fa';
+import { FaCalendarAlt, FaFileMedical, FaTrash } from 'react-icons/fa';
 import { borrarTurnoCompletoAdmin, getTurnsForAdminDashboard, updateTurnoStatus } from "@/lib/actions/turnos.admin.actions.js";
 import { obtenerServicios } from '@/lib/actions/servicios.actions.js';
 import TurnosTable from './TurnosTable';
@@ -209,15 +209,6 @@ export default function AdminTurnosDashboard() {
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
-      <div className="mb-6">
-        <Link href="/admin">
-          <span className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors duration-200 cursor-pointer">
-            <FaArrowLeft className="mr-2" />
-            Volver al Panel Principal
-          </span>
-        </Link>
-      </div>
-
       <h1 className="text-3xl font-bold mb-6 text-gray-800">Panel de Administración de Turnos</h1>
 
       <div className="flex border-b-2 border-blue-600 mb-6 flex-wrap">
