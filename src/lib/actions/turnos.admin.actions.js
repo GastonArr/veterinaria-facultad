@@ -124,20 +124,15 @@ export async function getTurnsForAdminDashboard() {
         continue;
       }
 
-      // IMPORTANTE: todos los turnos del día (incluyendo finalizados) deben seguir
-      // visibles en "Turnos del Día" y pasar recién al historial al día siguiente.
-      if (esDeHoy) {
-        hoy.push(turno);
-        continue;
-      }
-
-      if (turno.estado === 'finalizado' || turno.estado === 'servicio terminado') {
-        finalizados.push(turno);
-        continue;
-      }
-
       if (turno.estado === 'pendiente' && (fechaTurno.isAfter(nowInArgentina) || fechaTurno.isSame(nowInArgentina))) {
         proximos.push(turno);
+        continue;
+      }
+
+      // IMPORTANTE: los turnos pendientes se gestionan primero desde "Próximos a Confirmar".
+      // Una vez confirmados, recién pasan a "Turnos del Día" o "Turnos del Mes".
+      if (turno.estado === 'confirmado' && esDeHoy) {
+        hoy.push(turno);
         continue;
       }
 
@@ -148,6 +143,18 @@ export async function getTurnsForAdminDashboard() {
         (fechaTurno.isSame(endOfMonthInArgentina) || fechaTurno.isBefore(endOfMonthInArgentina))
       ) {
         mensual.push(turno);
+        continue;
+      }
+
+      // IMPORTANTE: todos los turnos del día (incluyendo finalizados y en curso) deben seguir
+      // visibles en "Turnos del Día" y pasar recién al historial al día siguiente.
+      if (esDeHoy) {
+        hoy.push(turno);
+        continue;
+      }
+
+      if (turno.estado === 'finalizado' || turno.estado === 'servicio terminado') {
+        finalizados.push(turno);
         continue;
       }
 
