@@ -5,11 +5,6 @@ import { useEffect } from 'react';
 import BackLink from '@/app/components/BackLink';
 
 const allowedRoles = ['admin', 'peluqueria', 'transporte'];
-const roleDisplayName = {
-    admin: 'Administrador/a',
-    peluqueria: 'Peluquería',
-    transporte: 'Transporte',
-};
 
 export default function AdminLayout({ children }) {
     const { user, loading } = useAuth();
@@ -35,7 +30,7 @@ export default function AdminLayout({ children }) {
     <div className="flex h-screen bg-gray-100">
       <main className="flex-1 p-4 md:p-8 overflow-y-auto bg-gray-100">
         <header className="flex justify-between items-center mb-4">
-            <h1 className="text-2xl font-bold text-gray-800">{roleDisplayName[user?.role] || 'Administrador/a'}</h1>
+            <h1 className="text-2xl font-bold text-gray-800">Admin</h1>
             <BackLink href="/" />
         </header>
         {children}
