@@ -17,6 +17,14 @@ const TurnoCard = ({ turno, compactarCancelado = false }) => {
     const statusStyles = {
         pendiente: 'bg-yellow-100 text-yellow-800',
         confirmado: 'bg-blue-100 text-blue-800',
+        'traslado confirmado': 'bg-emerald-100 text-emerald-800',
+        buscando: 'bg-cyan-100 text-cyan-800',
+        buscado: 'bg-sky-100 text-sky-800',
+        veterinaria: 'bg-indigo-100 text-indigo-800',
+        'peluqueria iniciada': 'bg-pink-100 text-pink-800',
+        'peluqueria finalizada': 'bg-purple-100 text-purple-800',
+        devolviendo: 'bg-orange-100 text-orange-800',
+        'servicio terminado': 'bg-lime-100 text-lime-800',
         finalizado: 'bg-green-100 text-green-800',
         cancelado: 'bg-red-100 text-red-800',
         reprogramar: 'bg-orange-100 text-orange-800',
@@ -34,7 +42,11 @@ const TurnoCard = ({ turno, compactarCancelado = false }) => {
 
     const necesitaReprogramacion = turno.estado === 'reprogramar';
     const estaCancelado = turno.estado === 'cancelado';
+    const trasladoConfirmado = turno.necesitaTraslado && turno.estado === 'traslado confirmado';
     const [mostrarDetalleCancelado, setMostrarDetalleCancelado] = useState(!compactarCancelado);
+    const horaTurno = turno.horario || (turno.fecha
+        ? new Date(turno.fecha).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
+        : null);
     
     // El color del ícono depende del tipo de servicio
     const iconColor = turno.tipo === 'peluqueria' ? 'text-pink-500' : 'text-blue-500';
@@ -67,6 +79,14 @@ const TurnoCard = ({ turno, compactarCancelado = false }) => {
             {!necesitaReprogramacion && (!compactarCancelado || mostrarDetalleCancelado) && (
                 <div className="text-right text-sm text-gray-500">
                     <p>{formattedDate}</p>
+                </div>
+            )}
+
+            {trasladoConfirmado && (
+                <div className="mt-4 p-3 rounded-lg border border-emerald-100 bg-emerald-50">
+                    <p className="text-sm text-emerald-800 font-semibold">
+                        El transporte confirmó tu traslado para las {horaTurno} hs.
+                    </p>
                 </div>
             )}
 

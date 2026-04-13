@@ -18,6 +18,7 @@ const horariosConsulta = [
     '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30',
     '15:00', '15:30', '16:00'
 ];
+const horariosPeluqueria = ['09:00', '10:00', '11:00', '12:00', '14:00', '15:00', '16:00'];
 
 
 
@@ -64,8 +65,9 @@ export async function crearTurnos(userId, data) {
     const writePromises = [];
     
     // --- LÓGICA DE ASIGNACIÓN SECUENCIAL ---
-    // Contador para asignar horarios de clínica uno después del otro.
+    // Contadores para asignar horarios uno detrás de otro por tipo de servicio.
     let clinicaSlotIndex = 0; 
+    let peluqueriaSlotIndex = 0; 
 
     try {
         for (const mascota of selectedMascotas) {
@@ -116,8 +118,8 @@ export async function crearTurnos(userId, data) {
 
             // --- Preparar turno de Peluquería (Sin cambios) ---
             if (motivos.peluqueria && serviciosSeleccionados.peluqueria) {
-                if (!horarioPeluqueria || !horarioPeluqueria.fecha || !horarioPeluqueria.turno) {
-                    throw new Error('Falta seleccionar la fecha o el turno para el servicio de peluquería.');
+                if (!horarioPeluqueria || !horarioPeluqueria.fecha || !horarioPeluqueria.hora) {
+                    throw new Error('Falta seleccionar la fecha o la hora para el servicio de peluquería.');
                 }
                 const servicioId = serviciosSeleccionados.peluqueria;
                 const servicioData = catalogoServicios.peluqueria.find(s => s.id === servicioId);
@@ -126,18 +128,23 @@ export async function crearTurnos(userId, data) {
                 const tamañoKey = TAMAÑO_PRECIOS_MAP[mascota.tamaño.toLowerCase()] || 'chico';
                 const precio = servicioData.precios[tamañoKey] || 0;
 
-                let fechaTurnoPeluqueria = dayjs.tz(horarioPeluqueria.fecha, timeZone);
-                fechaTurnoPeluqueria = fechaTurnoPeluqueria.hour(horarioPeluqueria.turno === 'mañana' ? 9 : 14).minute(0).second(0);
+                const [startHours, startMinutes] = horarioPeluqueria.hora.split(':').map(Number);
+                const offsetMinutes = peluqueriaSlotIndex * 60; // Asumiendo 1 turno de peluquería por hora.
+                const fechaTurnoPeluqueria = dayjs.tz(horarioPeluqueria.fecha, timeZone)
+                    .hour(startHours).minute(startMinutes).second(0)
+                    .add(offsetMinutes, 'minute');
+                const horarioFinalPeluqueria = fechaTurnoPeluqueria.format('HH:mm');
 
                 const turnoRef = firestore.collection('users').doc(userId).collection('mascotas').doc(mascota.id).collection('turnos').doc();
                 const turnoPeluqueriaData = {
                     fecha: admin.firestore.Timestamp.fromDate(fechaTurnoPeluqueria.toDate()),
-                    horario: horarioPeluqueria.turno, tipo: 'peluqueria', mascotaId: mascota.id, mascotaNombre: mascota.nombre, mascotaTamaño: mascota.tamaño,
+                    horario: horarioFinalPeluqueria, tipo: 'peluqueria', mascotaId: mascota.id, mascotaNombre: mascota.nombre, mascotaTamaño: mascota.tamaño,
                     servicioId: servicioId, servicioNombre: servicioData.nombre, precio: precio, necesitaTraslado: necesitaTraslado,
                     metodoPago: metodoPago, estado: 'pendiente', creadoEn: admin.firestore.FieldValue.serverTimestamp(),
                     clienteId: userId
                 };
                 writePromises.push(turnoRef.set(turnoPeluqueriaData));
+                peluqueriaSlotIndex++;
             }
         }
         
@@ -340,7 +347,42 @@ export async function getAvailableSlotsForNewTurno({ fecha, tipo, numMascotas })
         }
         
         if (tipo === 'peluqueria') {
-            return { success: true, data: { horarios: ['mañana', 'tarde'] } };
+            const startOfDay = dayjs.tz(fecha, timeZone).startOf('day');
+            const endOfDay = startOfDay.endOf('day');
+
+            const startOfDayTimestamp = admin.firestore.Timestamp.fromDate(startOfDay.toDate());
+            const endOfDayTimestamp = admin.firestore.Timestamp.fromDate(endOfDay.toDate());
+            const q = firestore.collectionGroup('turnos')
+                .where('tipo', '==', 'peluqueria')
+                .where('fecha', '>=', startOfDayTimestamp)
+                .where('fecha', '<=', endOfDayTimestamp);
+            const querySnapshot = await q.get();
+            const ocupacionDelDia = {};
+            querySnapshot.forEach(doc => {
+                const turno = doc.data();
+                if (turno.horario) {
+                    ocupacionDelDia[turno.horario] = (ocupacionDelDia[turno.horario] || 0) + 1;
+                }
+            });
+
+            const horariosDisponibles = [];
+            for (let i = 0; i <= horariosPeluqueria.length - numMascotas; i++) {
+                const horaInicioBloque = horariosPeluqueria[i];
+                let bloqueDisponible = true;
+                for (let j = 0; j < numMascotas; j++) {
+                    const horarioAVerificar = horariosPeluqueria[i + j];
+                    const ocupados = ocupacionDelDia[horarioAVerificar] || 0;
+                    if (ocupados >= 1) {
+                        bloqueDisponible = false;
+                        break;
+                    }
+                }
+                if (bloqueDisponible) {
+                    horariosDisponibles.push(horaInicioBloque);
+                }
+            }
+
+            return { success: true, data: { horarios: horariosDisponibles } };
         }
         return { success: false, error: "Tipo de servicio no válido." };
     } catch (error) {

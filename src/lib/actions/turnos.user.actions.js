@@ -105,6 +105,8 @@ export async function getTurnosByUserId({ userId }) {
         estado: turno.estado || 'desconocido',
         tipo: turno.tipo || 'general',
         fecha: fechaTurno.toISOString(),
+        horario: turno.horario || '',
+        necesitaTraslado: turno.necesitaTraslado || false,
         motivoCancelacion: turno.motivoCancelacion || '',
         mascota: { nombre: mascotaNombre }
       };
@@ -250,15 +252,8 @@ export async function getAvailableSlotsForReprogramming({ fecha, tipo, necesitaT
           }
           horariosDisponibles = todosLosHorarios.filter(h => !horariosOcupados.includes(h));
       } else if (tipo === 'peluqueria') {
-          const cuposPeluqueriaRef = db.collection('turnos_peluqueria').doc(targetDate.format('YYYY-MM-DD'));
-          const cuposDoc = await cuposPeluqueriaRef.get();
-          const cuposData = cuposDoc.exists ? cuposDoc.data() : { cuposManana: 4, cuposTarde: 4 };
-
-          const countManana = horariosOcupados.filter(h => h === 'mañana').length;
-          const countTarde = horariosOcupados.filter(h => h === 'tarde').length;
-          
-          if (cuposData.cuposManana > countManana) horariosDisponibles.push('mañana');
-          if (cuposData.cuposTarde > countTarde) horariosDisponibles.push('tarde');
+          const horariosPeluqueria = ['09:00', '10:00', '11:00', '12:00', '14:00', '15:00', '16:00'];
+          horariosDisponibles = horariosPeluqueria.filter(h => !horariosOcupados.includes(h));
       }
 
       return { success: true, data: { horarios: horariosDisponibles } };

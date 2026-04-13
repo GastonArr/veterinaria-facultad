@@ -149,13 +149,8 @@ function ReprogramarTurnoComponent() {
         setSelectedTime(time);
         if (selectedDay) {
             const newFullDate = new Date(selectedDay);
-            if (turnoDetails.tipo === 'clinica') {
-                 const [hours, minutes] = time.split(':').map(Number);
-                 newFullDate.setHours(hours, minutes, 0, 0);
-            } else {
-                const hour = time === 'mañana' ? 9 : 14;
-                newFullDate.setHours(hour, 0, 0, 0);
-            }
+            const [hours, minutes] = time.split(':').map(Number);
+            newFullDate.setHours(hours, minutes, 0, 0);
             setFinalDate(newFullDate);
         }
     };
@@ -206,7 +201,7 @@ function ReprogramarTurnoComponent() {
                         {slotsLoading && <div className="col-span-3 flex justify-center items-center h-24"><Spinner/></div>}
                         {!slotsLoading && availableSlots.length > 0 && availableSlots.map(time => (
                             <button key={time} onClick={() => handleTimeSelect(time)} disabled={!selectedDay} className={`p-2 rounded-lg border text-sm font-semibold transition ${selectedTime === time ? 'bg-blue-600 text-white' : 'bg-gray-50 hover:border-blue-500'}`}>
-                                {time}{turnoDetails.tipo === 'clinica' ? ' hs' : ''}
+                                {time} hs
                             </button>
                         ))}
                          {!slotsLoading && selectedDay && slotsError && <p className="col-span-3 text-center text-sm text-red-500 bg-red-50 p-2 rounded-md">{slotsError}</p>}
