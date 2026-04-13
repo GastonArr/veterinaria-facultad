@@ -42,11 +42,25 @@ const TurnoCard = ({ turno, compactarCancelado = false }) => {
 
     const necesitaReprogramacion = turno.estado === 'reprogramar';
     const estaCancelado = turno.estado === 'cancelado';
-    const trasladoConfirmado = turno.necesitaTraslado && turno.estado === 'traslado confirmado';
-    const [mostrarDetalleCancelado, setMostrarDetalleCancelado] = useState(!compactarCancelado);
     const horaTurno = turno.horario || (turno.fecha
         ? new Date(turno.fecha).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
         : null);
+
+    const statusMessages = {
+        confirmado: 'La veterinaria confirmó tu turno. Ya está agendado.',
+        'traslado confirmado': `El transporte confirmó tu traslado para las ${horaTurno || '--:--'} hs.`,
+        veterinaria: 'Tu mascota ya llegó a la veterinaria.',
+        'peluqueria iniciada': 'La peluquería ya comenzó con la atención de tu mascota.',
+        'peluqueria finalizada': turno.necesitaTraslado
+            ? 'La peluquería finalizó. El transporte iniciará la devolución.'
+            : 'La peluquería finalizó la atención de tu mascota.',
+        devolviendo: 'El transporte va en camino para devolver a tu mascota.',
+        'servicio terminado': 'La atención finalizó y tu mascota ya fue entregada.',
+        finalizado: 'La atención veterinaria fue finalizada.',
+    };
+
+    const statusMessage = statusMessages[turno.estado];
+    const [mostrarDetalleCancelado, setMostrarDetalleCancelado] = useState(!compactarCancelado);
     
     // El color del ícono depende del tipo de servicio
     const iconColor = turno.tipo === 'peluqueria' ? 'text-pink-500' : 'text-blue-500';
@@ -82,11 +96,9 @@ const TurnoCard = ({ turno, compactarCancelado = false }) => {
                 </div>
             )}
 
-            {trasladoConfirmado && (
+            {statusMessage && (
                 <div className="mt-4 p-3 rounded-lg border border-emerald-100 bg-emerald-50">
-                    <p className="text-sm text-emerald-800 font-semibold">
-                        El transporte confirmó tu traslado para las {horaTurno} hs.
-                    </p>
+                    <p className="text-sm text-emerald-800 font-semibold">{statusMessage}</p>
                 </div>
             )}
 

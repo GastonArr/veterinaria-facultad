@@ -166,7 +166,7 @@ export async function getTurnsForPeluqueria() {
             mascotasCache.set(mascotaCacheKey, serializableMascota);
           }
         } else {
-            serializableMascota = mascotasCache.get(mascotasCacheKey);
+            serializableMascota = mascotasCache.get(mascotaCacheKey);
         }
       }
 

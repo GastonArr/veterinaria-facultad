@@ -10,6 +10,8 @@ const ActionButton = ({ turno, onUpdate, isLoading }) => {
     const { estado, clienteId, mascotaId, id } = turno;
 
     const actions = {
+        confirmado: { text: 'Iniciar Peluquería', newStatus: 'peluqueria iniciada', className: 'bg-blue-600 hover:bg-blue-700' },
+        'traslado confirmado': { text: 'Iniciar Peluquería', newStatus: 'peluqueria iniciada', className: 'bg-blue-600 hover:bg-blue-700' },
         veterinaria: { text: 'Iniciar Peluquería', newStatus: 'peluqueria iniciada', className: 'bg-blue-600 hover:bg-blue-700' },
         'peluqueria iniciada': { text: 'Finalizar Peluquería', newStatus: 'peluqueria finalizada', className: 'bg-green-600 hover:bg-green-700' },
     };
