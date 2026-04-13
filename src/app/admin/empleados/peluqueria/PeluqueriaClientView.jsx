@@ -116,8 +116,7 @@ const PeluqueriaClientView = ({ initialTurnos }) => {
             {turnos.length === 0 ? (
                 <p className="text-gray-500 text-center mt-12">No hay turnos de peluquería pendientes para hoy.</p>
             ) : (
-                <>
-                <div className="hidden md:block overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
+                <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
                     <table className="min-w-full bg-white">
                         <thead className="bg-gray-50">
                             <tr>
@@ -153,25 +152,6 @@ const PeluqueriaClientView = ({ initialTurnos }) => {
                         </tbody>
                     </table>
                 </div>
-                <div className="grid gap-3 md:hidden">
-                  {turnos.map((turno) => (
-                    <article key={turno.id} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                      <div className="flex items-center justify-between">
-                        <p className="font-semibold text-gray-900">{turno.mascota.nombre}</p>
-                        <span className="text-sm text-gray-600">{new Date(turno.fecha).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}hs</span>
-                      </div>
-                      <p className="mt-1 text-sm text-gray-600">Dueño: {turno.user.nombre}</p>
-                      <p className="text-sm text-gray-600">Tel: {turno.user.telefono}</p>
-                      <span className={`mt-3 inline-flex px-2 py-1 text-xs leading-5 font-semibold rounded-full ${statusColors[turno.estado] || statusColors.default}`}>
-                        {turno.estado}
-                      </span>
-                      <div className="mt-3">
-                        <ActionButton turno={turno} onUpdate={handleAction} isLoading={loadingTurnoId === turno.id} />
-                      </div>
-                    </article>
-                  ))}
-                </div>
-                </>
             )}
 
             {turnoParaFinalizar && (

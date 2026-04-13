@@ -37,10 +37,10 @@ export default function AdminLayout({ children }) {
     }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <main className="mx-auto w-full max-w-7xl p-4 sm:p-6 lg:p-8 overflow-y-auto">
-        <header className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-800">{roleDisplayName[user?.role] || 'Administrador/a'}</h1>
+    <div className="flex h-screen bg-gray-100">
+      <main className="flex-1 p-4 md:p-8 overflow-y-auto bg-gray-100">
+        <header className="flex justify-between items-center mb-4">
+            <h1 className="text-2xl font-bold text-gray-800">{roleDisplayName[user?.role] || 'Administrador/a'}</h1>
             <BackLink href={roleHomeRoute[user?.role] || '/'} />
         </header>
         {children}
