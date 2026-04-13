@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FaPlus, FaSpinner } from 'react-icons/fa';
+import Link from 'next/link';
+import { FaArrowLeft, FaPlus, FaSpinner } from 'react-icons/fa';
 import Modal from '@/app/components/Modal';
 import FormularioNuevoServicio from './FormularioNuevoServicio';
 import ListaServicios from './ListaServicios';
@@ -77,6 +78,15 @@ export default function ServiciosPage() {
     return (
         <div className="p-4 sm:p-6 lg:p-8 bg-gray-50 min-h-screen">
             <div className="max-w-6xl mx-auto">
+                <div className="mb-6">
+                    <Link href="/admin">
+                        <span className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors duration-200 cursor-pointer">
+                            <FaArrowLeft className="mr-2" />
+                            Volver al Panel Principal
+                        </span>
+                    </Link>
+                </div>
+
                 <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8">
                     <div>
                         <h1 className="text-3xl font-bold text-gray-900">Calendario y Servicio</h1>
