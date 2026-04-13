@@ -3,7 +3,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { FaSignOutAlt } from 'react-icons/fa';
 
 const getInitial = (name) => {
@@ -14,11 +14,6 @@ const getInitial = (name) => {
 export default function Header() {
     const { user, isLoggedIn, logout, loading } = useAuth(); 
     const router = useRouter();
-    const pathname = usePathname();
-
-    const ownerRestrictedPaths = ['/turnos/nuevo', '/turnos/mis-turnos', '/mis-datos'];
-    const shouldLockHomeForOwner = user?.role === 'dueño' && ownerRestrictedPaths.some((path) => pathname?.startsWith(path));
-    const logoHref = shouldLockHomeForOwner ? '#' : '/';
 
     const cerrarsesion = async () => {
         try {
@@ -65,12 +60,7 @@ export default function Header() {
             <nav className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-20">
                     <div className="flex-shrink-0">
-                        <Link
-                            href={logoHref}
-                            aria-disabled={shouldLockHomeForOwner}
-                            onClick={shouldLockHomeForOwner ? (e) => e.preventDefault() : undefined}
-                            className={shouldLockHomeForOwner ? 'cursor-not-allowed opacity-90' : ''}
-                        >
+                        <Link href="/">
                             <Image 
                                 src="/LOGO.svg" 
                                 alt="Logo Veterinaria Magali Martin"
