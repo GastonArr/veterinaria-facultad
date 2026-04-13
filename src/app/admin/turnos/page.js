@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState, useTransition } from 'react';
-import Link from 'next/link';
-import { FaCalendarAlt, FaFileMedical, FaTrash } from 'react-icons/fa';
+import { FaFileMedical, FaTrash } from 'react-icons/fa';
 import { borrarTurnoCompletoAdmin, getTurnsForAdminDashboard, updateTurnoStatus } from "@/lib/actions/turnos.admin.actions.js";
 import { obtenerServicios } from '@/lib/actions/servicios.actions.js';
 import TurnosTable from './TurnosTable';
@@ -51,6 +50,9 @@ function TurnoCard({ turno, onUpdate, isUpdating, currentView, onDocumentar, onR
         <span className={`px-3 py-1 text-sm font-semibold rounded-full ${statusStyles[turno.estado] || 'bg-gray-200 text-gray-800'}`}>{turno.estado}</span>
       </div>
       <p className="text-gray-700 mb-3"><span className="font-semibold">Servicio:</span> {turno.servicioNombre}</p>
+      {currentView === 'paraProgramar' && (
+        <p className="text-sm text-red-700 mb-3"><span className="font-semibold">Motivo de cancelación:</span> {turno.motivoCancelacion || 'Sin motivo registrado.'}</p>
+      )}
       <div className="flex items-center justify-between text-sm text-gray-500">
         <span>{formattedDate()}</span>
         <div className="flex gap-2">
@@ -59,7 +61,7 @@ function TurnoCard({ turno, onUpdate, isUpdating, currentView, onDocumentar, onR
             <>
               {currentView === 'proximos' && turno.estado === 'pendiente' && (<button onClick={() => handleAction('confirmado')} className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition-colors">Confirmar</button>)}
               {currentView === 'hoy' && turno.estado === 'confirmado' && (<button onClick={() => handleAction('finalizado')} className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">Finalizar</button>)}
-              {currentView !== 'finalizados' && turno.estado !== 'cancelado' && (
+              {currentView !== 'finalizados' && currentView !== 'paraProgramar' && turno.estado !== 'cancelado' && (
                 <button
                   onClick={() => (onRequestCancel ? onRequestCancel(turno) : handleAction('cancelado'))}
                   className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
@@ -67,13 +69,7 @@ function TurnoCard({ turno, onUpdate, isUpdating, currentView, onDocumentar, onR
                   Cancelar
                 </button>
               )}
-              {currentView === 'reprogramar' && turno.estado === 'reprogramar' && (
-                <Link href={`/turnos/reprogramar?turnoId=${turno.id}&userId=${turno.userId}&mascotaId=${turno.mascotaId}`} className="px-3 py-1 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors inline-flex items-center">
-                  <FaCalendarAlt className="mr-1" />
-                  Reprogramar turno
-                </Link>
-              )}
-              {currentView !== 'proximos' && turno.estado !== 'cancelado' && (<button onClick={() => onDocumentar(turno)} className="px-3 py-1 bg-indigo-500 text-white rounded hover:bg-indigo-600 transition-colors" title="Documentar Turno"><FaFileMedical /></button>)}
+              {currentView !== 'proximos' && currentView !== 'paraProgramar' && turno.estado !== 'cancelado' && (<button onClick={() => onDocumentar(turno)} className="px-3 py-1 bg-indigo-500 text-white rounded hover:bg-indigo-600 transition-colors" title="Documentar Turno"><FaFileMedical /></button>)}
               {allowDeletePermanently && (
                 <button onClick={() => onDeleteTurno(turno)} className="px-3 py-1 bg-gray-800 text-white rounded hover:bg-black transition-colors inline-flex items-center gap-1" title="Borrar turno completo">
                   <FaTrash />
@@ -89,7 +85,7 @@ function TurnoCard({ turno, onUpdate, isUpdating, currentView, onDocumentar, onR
 }
 
 export default function AdminTurnosDashboard() {
-  const [turnos, setTurnos] = useState({ hoy: [], proximos: [], finalizados: [], reprogramar: [], mensual: [], todos: [] });
+  const [turnos, setTurnos] = useState({ hoy: [], proximos: [], finalizados: [], paraProgramar: [], mensual: [], todos: [] });
   const [vistaActual, setVistaActual] = useState('hoy');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -131,11 +127,7 @@ export default function AdminTurnosDashboard() {
   };
 
   const handleRequestCancel = (turno) => {
-    if (vistaActual === 'proximos') {
-      setTurnoACancelar(turno);
-      return;
-    }
-    handleUpdateStatus(turno.userId, turno.mascotaId, turno.id, 'cancelado');
+    setTurnoACancelar(turno);
   };
 
   const handleConfirmCancel = async (motivoCancelacion) => {
@@ -187,7 +179,8 @@ export default function AdminTurnosDashboard() {
       turno.mascota.nombre.toLowerCase().includes(term) ||
       `${turno.user.nombre.toLowerCase()} ${turno.user.apellido.toLowerCase()}`.includes(term) ||
       turno.servicioNombre.toLowerCase().includes(term) ||
-      turno.estado.toLowerCase().includes(term)
+      turno.estado.toLowerCase().includes(term) ||
+      (turno.motivoCancelacion || '').toLowerCase().includes(term)
     );
   });
 
@@ -198,10 +191,10 @@ export default function AdminTurnosDashboard() {
   if (error) return <div className="text-center p-10 text-red-600 bg-red-100 rounded-lg shadow-md"><strong>Error:</strong> {error}</div>;
 
   const getTabStyle = (tabName) => `px-6 py-3 font-semibold rounded-t-lg focus:outline-none transition-colors ${vistaActual === tabName ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`;
-  const getReprogramarTabStyle = () => {
+  const getParaProgramarTabStyle = () => {
     const baseStyle = 'px-6 py-3 font-semibold rounded-t-lg focus:outline-none transition-colors ';
-    const isActive = vistaActual === 'reprogramar';
-    const hasItems = turnos.reprogramar && turnos.reprogramar.length > 0;
+    const isActive = vistaActual === 'paraProgramar';
+    const hasItems = turnos.paraProgramar && turnos.paraProgramar.length > 0;
     if (isActive) return baseStyle + 'bg-orange-500 text-white';
     if (hasItems) return baseStyle + 'bg-orange-200 text-orange-800 hover:bg-orange-300 animate-pulse';
     return baseStyle + 'bg-gray-200 text-gray-600 hover:bg-gray-300';
@@ -215,7 +208,7 @@ export default function AdminTurnosDashboard() {
         <button className={getTabStyle('hoy')} onClick={() => setVistaActual('hoy')}>Turnos del Día</button>
         <button className={getTabStyle('proximos')} onClick={() => setVistaActual('proximos')}>Próximos a Confirmar</button>
         <button className={getTabStyle('mensual')} onClick={() => setVistaActual('mensual')}>Turnos del Mes</button>
-        <button className={getReprogramarTabStyle()} onClick={() => setVistaActual('reprogramar')}>Para Reprogramar ({turnos.reprogramar?.length || 0})</button>
+        <button className={getParaProgramarTabStyle()} onClick={() => setVistaActual('paraProgramar')}>Para Programar ({turnos.paraProgramar?.length || 0})</button>
         <button className={getTabStyle('finalizados')} onClick={() => setVistaActual('finalizados')}>Historial</button>
         <button className={getTabStyle('todos')} onClick={() => setVistaActual('todos')}>Borrado de Pruebas</button>
       </div>

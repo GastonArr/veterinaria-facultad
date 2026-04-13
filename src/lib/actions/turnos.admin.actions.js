@@ -28,7 +28,7 @@ export async function getTurnsForAdminDashboard() {
                                  .get();
 
     if (turnosSnapshot.empty) {
-      return { success: true, data: { hoy: [], proximos: [], finalizados: [], reprogramar: [], mensual: [], todos: [] } };
+      return { success: true, data: { hoy: [], proximos: [], finalizados: [], paraProgramar: [], mensual: [], todos: [] } };
     }
 
     const usersCache = new Map();
@@ -108,7 +108,7 @@ export async function getTurnsForAdminDashboard() {
     const hoy = [];
     const proximos = [];
     const finalizados = [];
-    const reprogramar = [];
+    const paraProgramar = [];
     const mensual = [];
     const todos = [...enrichedTurnos];
 
@@ -119,26 +119,37 @@ export async function getTurnsForAdminDashboard() {
         (fechaTurno.isAfter(startOfTodayInArgentina) || fechaTurno.isSame(startOfTodayInArgentina)) &&
         (fechaTurno.isBefore(endOfTodayInArgentina) || fechaTurno.isSame(endOfTodayInArgentina));
 
-      // La pestaña "Turnos del Día" debe mostrar TODOS los turnos del día sin filtrar por estado.
-      if (esDeHoy) {
-        hoy.push(turno);
+      if (turno.estado === 'cancelado' || turno.estado === 'reprogramar') {
+        paraProgramar.push(turno);
+        continue;
       }
 
-      if (turno.estado === 'reprogramar') {
-        reprogramar.push(turno);
-      } else if (turno.estado === 'finalizado' || turno.estado === 'cancelado' || turno.estado === 'servicio terminado') {
+      if (turno.estado === 'finalizado' || turno.estado === 'servicio terminado') {
         finalizados.push(turno);
-      } else if (fechaTurno.isAfter(nowInArgentina) && turno.estado === 'pendiente') {
+        continue;
+      }
+
+      if (turno.estado === 'pendiente' && (fechaTurno.isAfter(nowInArgentina) || fechaTurno.isSame(nowInArgentina))) {
         proximos.push(turno);
-      } else if (
-        (turno.estado === 'confirmado' || turno.estado === 'pendiente') &&
-        fechaTurno.isAfter(endOfTodayInArgentina) && 
-        fechaTurno.isAfter(startOfMonthInArgentina) && 
-        fechaTurno.isBefore(endOfMonthInArgentina)
+        continue;
+      }
+
+      if (turno.estado === 'confirmado' && esDeHoy) {
+        hoy.push(turno);
+        continue;
+      }
+
+      if (
+        turno.estado === 'confirmado' &&
+        fechaTurno.isAfter(endOfTodayInArgentina) &&
+        (fechaTurno.isSame(startOfMonthInArgentina) || fechaTurno.isAfter(startOfMonthInArgentina)) &&
+        (fechaTurno.isSame(endOfMonthInArgentina) || fechaTurno.isBefore(endOfMonthInArgentina))
       ) {
         mensual.push(turno);
-      // Mueve los turnos pasados no finalizados a "finalizados" para limpieza
-      } else if (fechaTurno.isBefore(startOfTodayInArgentina) && (turno.estado === 'pendiente' || turno.estado === 'confirmado')) {
+        continue;
+      }
+
+      if (fechaTurno.isBefore(startOfTodayInArgentina) && (turno.estado === 'pendiente' || turno.estado === 'confirmado')) {
         finalizados.push(turno);
       }
     }
@@ -146,12 +157,12 @@ export async function getTurnsForAdminDashboard() {
     proximos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
     finalizados.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
     hoy.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-    reprogramar.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+    paraProgramar.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
     mensual.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
     todos.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
 
-    return { success: true, data: { hoy, proximos, finalizados, reprogramar, mensual, todos } };
+    return { success: true, data: { hoy, proximos, finalizados, paraProgramar, mensual, todos } };
 
   } catch (error) {
     console.error("Error en getTurnsForAdminDashboard:", error);

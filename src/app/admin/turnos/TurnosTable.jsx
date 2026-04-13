@@ -1,8 +1,6 @@
 'use client';
 
 import { FaCheck, FaTimes, FaDog, FaCat, FaFileMedical, FaTrash } from 'react-icons/fa';
-import Link from 'next/link';
-import { FaCalendarAlt } from 'react-icons/fa';
 
 export default function TurnosTable({ turnos, onUpdate, isUpdating, currentView, onDocumentar, onRequestCancel, onDeleteTurno, allowDeletePermanently = false }) {
   const statusStyles = {
@@ -60,7 +58,7 @@ export default function TurnosTable({ turnos, onUpdate, isUpdating, currentView,
             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Servicio</th>
             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
             <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-            <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+            <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{currentView === 'paraProgramar' ? 'Motivo de cancelación' : 'Acciones'}</th>
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
@@ -91,44 +89,43 @@ export default function TurnosTable({ turnos, onUpdate, isUpdating, currentView,
                   {turno.estado}
                 </span>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                <div className="flex items-center justify-center gap-2">
-                  {isUpdating && <span className="text-sm text-gray-500">...</span>}
-                  {!isUpdating && (
-                    <>
-                      {currentView === 'proximos' && turno.estado === 'pendiente' && (
-                        <button onClick={() => handleAction(turno, 'confirmado')} className="p-2 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors" title="Confirmar">
-                          <FaCheck />
-                        </button>
-                      )}
-                      {currentView === 'hoy' && turno.estado === 'confirmado' && (
-                        <button onClick={() => handleAction(turno, 'finalizado')} className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors" title="Finalizar">
-                          <FaCheck />
-                        </button>
-                      )}
-                      {currentView !== 'finalizados' && turno.estado !== 'cancelado' && (
-                        <button onClick={() => handleCancelAction(turno)} className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors" title="Cancelar">
-                          <FaTimes />
-                        </button>
-                      )}
-                      {currentView === 'reprogramar' && turno.estado === 'reprogramar' && (
-                        <Link href={`/turnos/reprogramar?turnoId=${turno.id}&userId=${turno.userId}&mascotaId=${turno.mascotaId}`} className="p-2 bg-orange-500 text-white rounded-full hover:bg-orange-600 transition-colors" title="Reprogramar turno">
-                          <FaCalendarAlt />
-                        </Link>
-                      )}
-                      {currentView !== 'proximos' && turno.estado !== 'cancelado' && (
-                        <button onClick={() => onDocumentar(turno)} className="p-2 bg-indigo-500 text-white rounded-full hover:bg-indigo-600 transition-colors ml-1" title="Documentar">
-                          <FaFileMedical />
-                        </button>
-                      )}
-                      {allowDeletePermanently && (
-                        <button onClick={() => handleDeleteAction(turno)} className="p-2 bg-gray-800 text-white rounded-full hover:bg-black transition-colors ml-1" title="Borrar turno completo">
-                          <FaTrash />
-                        </button>
-                      )}
-                    </>
-                  )}
-                </div>
+              <td className="px-6 py-4 text-center text-sm font-medium">
+                {currentView === 'paraProgramar' ? (
+                  <span className="text-sm text-red-700">{turno.motivoCancelacion || 'Sin motivo registrado.'}</span>
+                ) : (
+                  <div className="flex items-center justify-center gap-2">
+                    {isUpdating && <span className="text-sm text-gray-500">...</span>}
+                    {!isUpdating && (
+                      <>
+                        {currentView === 'proximos' && turno.estado === 'pendiente' && (
+                          <button onClick={() => handleAction(turno, 'confirmado')} className="p-2 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors" title="Confirmar">
+                            <FaCheck />
+                          </button>
+                        )}
+                        {currentView === 'hoy' && turno.estado === 'confirmado' && (
+                          <button onClick={() => handleAction(turno, 'finalizado')} className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors" title="Finalizar">
+                            <FaCheck />
+                          </button>
+                        )}
+                        {currentView !== 'finalizados' && currentView !== 'paraProgramar' && turno.estado !== 'cancelado' && (
+                          <button onClick={() => handleCancelAction(turno)} className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors" title="Cancelar">
+                            <FaTimes />
+                          </button>
+                        )}
+                        {currentView !== 'proximos' && currentView !== 'paraProgramar' && turno.estado !== 'cancelado' && (
+                          <button onClick={() => onDocumentar(turno)} className="p-2 bg-indigo-500 text-white rounded-full hover:bg-indigo-600 transition-colors ml-1" title="Documentar">
+                            <FaFileMedical />
+                          </button>
+                        )}
+                        {allowDeletePermanently && (
+                          <button onClick={() => handleDeleteAction(turno)} className="p-2 bg-gray-800 text-white rounded-full hover:bg-black transition-colors ml-1" title="Borrar turno completo">
+                            <FaTrash />
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
               </td>
             </tr>
           ))}
