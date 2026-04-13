@@ -27,7 +27,7 @@ export const TurnoWizardProvider = ({ children, initialData }) => {
     const [motivosPorMascota, setMotivosPorMascota] = useState({});
     const [specificServices, setSpecificServices] = useState({});
     const [horarioClinica, setHorarioClinica] = useState({ fecha: undefined, hora: '' });
-    const [horarioPeluqueria, setHorarioPeluqueria] = useState({ fecha: undefined, turno: '' });
+    const [horarioPeluqueria, setHorarioPeluqueria] = useState({ fecha: undefined, hora: '' });
     const [necesitaTraslado, setNecesitaTraslado] = useState(false);
     const [metodoPago, setMetodoPago] = useState('efectivo');
 

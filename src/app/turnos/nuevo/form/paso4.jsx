@@ -5,7 +5,7 @@ import { useTurnoWizard } from '../TurnoWizardContext';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 import { es } from 'date-fns/locale';
-import { FaStethoscope, FaCut, FaSun, FaMoon, FaTruck, FaSpinner } from 'react-icons/fa';
+import { FaStethoscope, FaCut, FaTruck, FaSpinner } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import { getAvailableSlotsForNewTurno, verificarDisponibilidadTrasladoAction } from '@/lib/actions/turnos.actions';
 
@@ -32,18 +32,23 @@ const HorarioClinicaSelector = ({ horariosDisponibles, fecha, hora, onFechaChang
     </div>
 );
 
-const HorarioPeluqueriaSelector = ({ fecha, turno, onFechaChange, onTurnoChange, disabledDays, modifiers, modifiersStyles }) => (
+const HorarioPeluqueriaSelector = ({ horariosDisponibles, fecha, hora, onFechaChange, onHoraChange, disabledDays, modifiers, modifiersStyles, isLoading, error }) => (
      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
         <div className="flex justify-center">
              <DayPicker mode="single" selected={fecha} onSelect={onFechaChange} locale={es} disabled={disabledDays} modifiers={modifiers} modifiersStyles={modifiersStyles} styles={{ caption: { color: '#16a34a' }, head: { color: '#22c55e'} }}/>
         </div>
         <div>
-            <label className="block text-sm font-bold text-gray-700 mb-4">Turno</label>
+            <label className="block text-sm font-bold text-gray-700 mb-4">Horario</label>
             {fecha ? (
-                <div className="flex gap-4">
-                    <button type="button" onClick={() => onTurnoChange('mañana')} className={`flex-1 p-3 rounded-lg border-2 flex items-center justify-center gap-2 ${turno === 'mañana' ? 'border-green-500 bg-green-50' : ''}`}><FaSun /> Mañana</button>
-                    <button type="button" onClick={() => onTurnoChange('tarde')} className={`flex-1 p-3 rounded-lg border-2 flex items-center justify-center gap-2 ${turno === 'tarde' ? 'border-green-500 bg-green-50' : ''}`}><FaMoon /> Tarde</button>
-                </div>
+                isLoading ? <div className="flex justify-center items-center p-4"><FaSpinner className="animate-spin text-2xl text-green-500" /></div> :
+                error ? <div className="text-center text-red-700 bg-red-50 p-3 rounded-lg text-sm">{error}</div> :
+                horariosDisponibles.length > 0 ? (
+                    <div className="grid grid-cols-3 gap-2">
+                        {horariosDisponibles.map(h => (
+                            <button key={h} type="button" onClick={() => onHoraChange(h)} className={`p-3 rounded-lg text-center font-semibold transition-all duration-200 border ${hora === h ? 'bg-green-600 text-white shadow-lg' : 'bg-white hover:bg-green-100'}`}>{h}</button>
+                        ))}
+                    </div>
+                ) : <div className="text-center text-yellow-700 bg-yellow-50 p-3 rounded-lg text-sm">No hay horarios disponibles para este día.</div>
             ) : <div className="text-center text-gray-500 bg-gray-100 p-3 rounded-lg text-sm">Elige una fecha para ver los turnos</div>}
         </div>
     </div>
@@ -62,11 +67,15 @@ export default function Paso4() {
     } = useTurnoWizard();
 
     const [horariosDisponiblesClinica, setHorariosDisponiblesClinica] = useState([]);
+    const [horariosDisponiblesPeluqueria, setHorariosDisponiblesPeluqueria] = useState([]);
     const [loadingHorarios, setLoadingHorarios] = useState(false);
+    const [loadingHorariosPeluqueria, setLoadingHorariosPeluqueria] = useState(false);
     const [errorHorarios, setErrorHorarios] = useState(null);
+    const [errorHorariosPeluqueria, setErrorHorariosPeluqueria] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const numMascotasClinica = useMemo(() => selectedMascotas.filter(m => motivosPorMascota[m.id]?.clinica).length, [selectedMascotas, motivosPorMascota]);
+    const numMascotasPeluqueria = useMemo(() => selectedMascotas.filter(m => motivosPorMascota[m.id]?.peluqueria).length, [selectedMascotas, motivosPorMascota]);
     const necesitaHorarioClinica = numMascotasClinica > 0;
     const necesitaHorarioPeluqueria = useMemo(() => selectedMascotas.some(m => motivosPorMascota[m.id]?.peluqueria), [selectedMascotas, motivosPorMascota]);
 
@@ -104,6 +113,40 @@ export default function Paso4() {
         fetchHorarios();
     }, [horarioClinica.fecha, numMascotasClinica]);
 
+    useEffect(() => {
+        const fetchHorariosPeluqueria = async () => {
+            if (!horarioPeluqueria.fecha || numMascotasPeluqueria === 0) {
+                setHorariosDisponiblesPeluqueria([]);
+                return;
+            }
+
+            setLoadingHorariosPeluqueria(true);
+            setErrorHorariosPeluqueria(null);
+
+            try {
+                const result = await getAvailableSlotsForNewTurno({
+                    fecha: horarioPeluqueria.fecha.toISOString().split('T')[0],
+                    tipo: 'peluqueria',
+                    numMascotas: numMascotasPeluqueria
+                });
+
+                if (result.success) {
+                    setHorariosDisponiblesPeluqueria(result.data.horarios);
+                } else {
+                    setErrorHorariosPeluqueria(result.error || "No se pudo cargar la disponibilidad.");
+                    setHorariosDisponiblesPeluqueria([]);
+                }
+            } catch (error) {
+                setErrorHorariosPeluqueria("Error de red al buscar horarios.");
+                setHorariosDisponiblesPeluqueria([]);
+            } finally {
+                setLoadingHorariosPeluqueria(false);
+            }
+        };
+
+        fetchHorariosPeluqueria();
+    }, [horarioPeluqueria.fecha, numMascotasPeluqueria]);
+
     const disabledDays = useMemo(() => {
         const today = new Date();
         const tomorrow = new Date(today);
@@ -125,7 +168,7 @@ export default function Paso4() {
     const modifiersStyles = { noLaboral: { color: 'white', backgroundColor: '#ef4444', borderRadius: '50%'} };
 
     const isStepComplete = (!necesitaHorarioClinica || (horarioClinica.fecha && horarioClinica.hora)) && 
-                           (!necesitaHorarioPeluqueria || (horarioPeluqueria.fecha && horarioPeluqueria.turno));
+                           (!necesitaHorarioPeluqueria || (horarioPeluqueria.fecha && horarioPeluqueria.hora));
 
     const handleNext = async () => {
         if (necesitaTraslado) {
@@ -188,13 +231,16 @@ export default function Paso4() {
                             <FaCut className="text-green-500"/>Turno de Peluquería
                         </h3>
                         <HorarioPeluqueriaSelector 
+                            horariosDisponibles={horariosDisponiblesPeluqueria}
                             fecha={horarioPeluqueria.fecha} 
-                            turno={horarioPeluqueria.turno} 
-                            onFechaChange={(fecha) => setHorarioPeluqueria(p => ({ ...p, fecha, turno: ''}))} 
-                            onTurnoChange={(turno) => setHorarioPeluqueria(p => ({...p, turno}))} 
+                            hora={horarioPeluqueria.hora}
+                            onFechaChange={(fecha) => setHorarioPeluqueria(p => ({ ...p, fecha, hora: ''}))} 
+                            onHoraChange={(hora) => setHorarioPeluqueria(p => ({...p, hora}))} 
                             disabledDays={disabledDays} 
                             modifiers={modifiers} 
                             modifiersStyles={modifiersStyles} 
+                            isLoading={loadingHorariosPeluqueria}
+                            error={errorHorariosPeluqueria}
                         />
                          <div className="p-4 border rounded-lg mt-4">
                             <div className="flex items-center justify-between">

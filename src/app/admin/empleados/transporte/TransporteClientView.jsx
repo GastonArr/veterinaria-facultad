@@ -10,7 +10,8 @@ const ActionButton = ({ turno, onUpdate, isLoading }) => {
     const { estado, clienteId, mascotaId, id } = turno;
 
     const actions = {
-        confirmado: { text: 'Iniciar Recogida', newStatus: 'buscando', className: 'bg-blue-600 hover:bg-blue-700' },
+        confirmado: { text: 'Confirmar Traslado', newStatus: 'traslado confirmado', className: 'bg-emerald-600 hover:bg-emerald-700' },
+        'traslado confirmado': { text: 'Iniciar Recogida', newStatus: 'buscando', className: 'bg-blue-600 hover:bg-blue-700' },
         buscando: { text: 'Mascota Recogida', newStatus: 'buscado', className: 'bg-cyan-600 hover:bg-cyan-700' },
         buscado: { text: 'Entregar en Veterinaria', newStatus: 'veterinaria', className: 'bg-indigo-600 hover:bg-indigo-700' },
         'peluqueria finalizada': { text: 'Iniciar Devolución', newStatus: 'devolviendo', className: 'bg-orange-500 hover:bg-orange-600' },
@@ -60,7 +61,7 @@ const TransporteClientView = ({ initialTurnos }) => {
     };
 
     const getTripType = (estado) => {
-        const recogidaStates = ['confirmado', 'buscando', 'buscado'];
+        const recogidaStates = ['confirmado', 'traslado confirmado', 'buscando', 'buscado'];
         const entregaStates = ['peluqueria finalizada', 'devolviendo'];
         if (recogidaStates.includes(estado)) return { text: 'Recogida', className: 'bg-blue-100 text-blue-800' };
         if (entregaStates.includes(estado)) return { text: 'Entrega', className: 'bg-green-100 text-green-800' };
@@ -69,6 +70,7 @@ const TransporteClientView = ({ initialTurnos }) => {
     
     const statusColors = {
         confirmado: 'bg-blue-100 text-blue-800',
+        'traslado confirmado': 'bg-emerald-100 text-emerald-800',
         buscando: 'bg-cyan-100 text-cyan-800',
         buscado: 'bg-sky-100 text-sky-800',
         veterinaria: 'bg-indigo-100 text-indigo-800',
