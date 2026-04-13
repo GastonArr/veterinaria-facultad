@@ -305,6 +305,16 @@ export async function getAvailableSlotsForNewTurno({ fecha, tipo, numMascotas })
     }
     try {
         const timeZone = 'America/Argentina/Buenos_Aires';
+        const ahoraEnArgentina = dayjs().tz(timeZone);
+        const fechaSolicitada = dayjs.tz(fecha, timeZone).startOf('day');
+        const esHoy = fechaSolicitada.isSame(ahoraEnArgentina, 'day');
+        const horaActual = ahoraEnArgentina.format('HH:mm');
+
+        const esHorarioValido = (horaInicioBloque) => {
+            if (!esHoy) return true;
+            return horaInicioBloque > horaActual;
+        };
+
         if (tipo === 'clinica') {
             const startOfDay = dayjs.tz(fecha, timeZone).startOf('day');
             const endOfDay = startOfDay.endOf('day');
@@ -339,7 +349,9 @@ export async function getAvailableSlotsForNewTurno({ fecha, tipo, numMascotas })
                     }
                 }
                 if (bloqueDisponible) {
-                    horariosDisponibles.push(horaInicioBloque);
+                    if (esHorarioValido(horaInicioBloque)) {
+                        horariosDisponibles.push(horaInicioBloque);
+                    }
                 }
             }
             
@@ -378,7 +390,9 @@ export async function getAvailableSlotsForNewTurno({ fecha, tipo, numMascotas })
                     }
                 }
                 if (bloqueDisponible) {
-                    horariosDisponibles.push(horaInicioBloque);
+                    if (esHorarioValido(horaInicioBloque)) {
+                        horariosDisponibles.push(horaInicioBloque);
+                    }
                 }
             }
 

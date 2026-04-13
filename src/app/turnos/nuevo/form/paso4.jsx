@@ -149,16 +149,14 @@ export default function Paso4() {
 
     const disabledDays = useMemo(() => {
         const today = new Date();
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        tomorrow.setHours(0,0,0,0);
+        today.setHours(0, 0, 0, 0);
 
         const twoWeeksFromNow = new Date();
         twoWeeksFromNow.setDate(today.getDate() + 15);
         
         return [
             ...(permitirTurnosDiasEspeciales ? [] : diasNoLaborales),
-            { before: tomorrow },
+            { before: today },
             { after: twoWeeksFromNow },
             ...(permitirTurnosDiasEspeciales ? [] : [{ dayOfWeek: [0, 6] }])
         ];
