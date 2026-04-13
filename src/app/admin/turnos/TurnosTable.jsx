@@ -1,10 +1,10 @@
 'use client';
 
-import { FaCheck, FaTimes, FaDog, FaCat, FaFileMedical } from 'react-icons/fa';
+import { FaCheck, FaTimes, FaDog, FaCat, FaFileMedical, FaTrash } from 'react-icons/fa';
 import Link from 'next/link';
 import { FaCalendarAlt } from 'react-icons/fa';
 
-export default function TurnosTable({ turnos, onUpdate, isUpdating, currentView, onDocumentar, onRequestCancel }) {
+export default function TurnosTable({ turnos, onUpdate, isUpdating, currentView, onDocumentar, onRequestCancel, onDeleteTurno, allowDeletePermanently = false }) {
   const statusStyles = {
     pendiente: 'bg-yellow-200 text-yellow-800',
     confirmado: 'bg-blue-200 text-blue-800',
@@ -31,6 +31,12 @@ export default function TurnosTable({ turnos, onUpdate, isUpdating, currentView,
       return;
     }
     handleAction(turno, 'cancelado');
+  };
+
+  const handleDeleteAction = (turno) => {
+    if (typeof onDeleteTurno === 'function') {
+      onDeleteTurno(turno);
+    }
   };
 
   const formattedDate = (fecha) => {
@@ -113,6 +119,11 @@ export default function TurnosTable({ turnos, onUpdate, isUpdating, currentView,
                       {currentView !== 'proximos' && turno.estado !== 'cancelado' && (
                         <button onClick={() => onDocumentar(turno)} className="p-2 bg-indigo-500 text-white rounded-full hover:bg-indigo-600 transition-colors ml-1" title="Documentar">
                           <FaFileMedical />
+                        </button>
+                      )}
+                      {allowDeletePermanently && (
+                        <button onClick={() => handleDeleteAction(turno)} className="p-2 bg-gray-800 text-white rounded-full hover:bg-black transition-colors ml-1" title="Borrar turno completo">
+                          <FaTrash />
                         </button>
                       )}
                     </>

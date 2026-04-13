@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useTransition } from 'react';
 import Link from 'next/link';
-import { FaArrowLeft, FaCalendarAlt, FaFileMedical } from 'react-icons/fa';
-import { getTurnsForAdminDashboard, updateTurnoStatus } from "@/lib/actions/turnos.admin.actions.js";
+import { FaArrowLeft, FaCalendarAlt, FaFileMedical, FaTrash } from 'react-icons/fa';
+import { borrarTurnoCompletoAdmin, getTurnsForAdminDashboard, updateTurnoStatus } from "@/lib/actions/turnos.admin.actions.js";
 import { obtenerServicios } from '@/lib/actions/servicios.actions.js';
 import TurnosTable from './TurnosTable';
 import FilterInput from './FilterInput';
@@ -13,7 +13,7 @@ import CancelarTurnoModal from './CancelarTurnoModal';
 const IconoClinica = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>;
 const IconoPeluqueria = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-pink-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.121 14.121a3 3 0 10-4.242 0M12 18.5V19m0-16v.5m-5.071 2.929l.354.354M17.425 5.575l-.354.354M4 12H3.5m17 0h-.5" /></svg>;
 
-function TurnoCard({ turno, onUpdate, isUpdating, currentView, onDocumentar, onRequestCancel }) {
+function TurnoCard({ turno, onUpdate, isUpdating, currentView, onDocumentar, onRequestCancel, allowDeletePermanently, onDeleteTurno }) {
   const statusStyles = {
     pendiente: 'bg-yellow-200 text-yellow-800',
     confirmado: 'bg-blue-200 text-blue-800',
@@ -74,6 +74,12 @@ function TurnoCard({ turno, onUpdate, isUpdating, currentView, onDocumentar, onR
                 </Link>
               )}
               {currentView !== 'proximos' && turno.estado !== 'cancelado' && (<button onClick={() => onDocumentar(turno)} className="px-3 py-1 bg-indigo-500 text-white rounded hover:bg-indigo-600 transition-colors" title="Documentar Turno"><FaFileMedical /></button>)}
+              {allowDeletePermanently && (
+                <button onClick={() => onDeleteTurno(turno)} className="px-3 py-1 bg-gray-800 text-white rounded hover:bg-black transition-colors inline-flex items-center gap-1" title="Borrar turno completo">
+                  <FaTrash />
+                  Borrar
+                </button>
+              )}
             </>
           )}
         </div>
@@ -83,7 +89,7 @@ function TurnoCard({ turno, onUpdate, isUpdating, currentView, onDocumentar, onR
 }
 
 export default function AdminTurnosDashboard() {
-  const [turnos, setTurnos] = useState({ hoy: [], proximos: [], finalizados: [], reprogramar: [], mensual: [] });
+  const [turnos, setTurnos] = useState({ hoy: [], proximos: [], finalizados: [], reprogramar: [], mensual: [], todos: [] });
   const [vistaActual, setVistaActual] = useState('hoy');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -153,6 +159,28 @@ export default function AdminTurnosDashboard() {
     });
   };
 
+  const handleDeleteTurno = (turno) => {
+    if (!turno) return;
+    const confirmDelete = window.confirm(
+      `¿Seguro que querés borrar COMPLETAMENTE el turno de ${turno.mascota?.nombre || 'la mascota'}?\n\nEsta acción eliminará historial y no se puede deshacer.`
+    );
+    if (!confirmDelete) return;
+
+    startTransition(async () => {
+      const result = await borrarTurnoCompletoAdmin({
+        userId: turno.userId,
+        mascotaId: turno.mascotaId,
+        turnoId: turno.id,
+      });
+
+      if (result.success) {
+        await cargarTurnos();
+      } else {
+        setError(result.error || 'No se pudo borrar el turno.');
+      }
+    });
+  };
+
   const filteredTurnos = (turnos[vistaActual] || []).filter(turno => {
     const term = searchTerm.toLowerCase();
     return (
@@ -198,7 +226,14 @@ export default function AdminTurnosDashboard() {
         <button className={getTabStyle('mensual')} onClick={() => setVistaActual('mensual')}>Turnos del Mes</button>
         <button className={getReprogramarTabStyle()} onClick={() => setVistaActual('reprogramar')}>Para Reprogramar ({turnos.reprogramar?.length || 0})</button>
         <button className={getTabStyle('finalizados')} onClick={() => setVistaActual('finalizados')}>Historial</button>
+        <button className={getTabStyle('todos')} onClick={() => setVistaActual('todos')}>Borrado de Pruebas</button>
       </div>
+
+      {vistaActual === 'todos' && (
+        <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-3 mb-4 text-sm">
+          Modo de pruebas: desde esta pestaña podés borrar turnos completos (incluye historial/documentación del turno).
+        </div>
+      )}
 
       <FilterInput value={searchTerm} onChange={setSearchTerm} placeholder="Buscar por mascota, dueño, servicio..." />
 
@@ -214,13 +249,13 @@ export default function AdminTurnosDashboard() {
 
           {/* Vista Escritorio (Tabla) */}
           <div className="md:block ">
-            <TurnosTable turnos={turnosClinica} onUpdate={handleUpdateStatus} isUpdating={isUpdating} currentView={vistaActual} onDocumentar={setModalTurno} onRequestCancel={handleRequestCancel} />
+            <TurnosTable turnos={turnosClinica} onUpdate={handleUpdateStatus} isUpdating={isUpdating} currentView={vistaActual} onDocumentar={setModalTurno} onRequestCancel={handleRequestCancel} onDeleteTurno={handleDeleteTurno} allowDeletePermanently={vistaActual === 'todos'} />
           </div>
 
           {/* Vista Móvil (Tarjetas) */}
           <div className="md:hidden">
             {turnosClinica.map(turno => (
-              <TurnoCard key={turno.id} turno={turno} onUpdate={handleUpdateStatus} isUpdating={isUpdating} currentView={vistaActual} onDocumentar={setModalTurno} onRequestCancel={handleRequestCancel} />
+              <TurnoCard key={turno.id} turno={turno} onUpdate={handleUpdateStatus} isUpdating={isUpdating} currentView={vistaActual} onDocumentar={setModalTurno} onRequestCancel={handleRequestCancel} allowDeletePermanently={vistaActual === 'todos'} onDeleteTurno={handleDeleteTurno} />
             ))}
             {!turnosClinica.length && (
               <p className="text-center text-gray-500 mt-4">No hay turnos para mostrar.</p>
@@ -237,13 +272,13 @@ export default function AdminTurnosDashboard() {
 
           {/* Vista Escritorio (Tabla) */}
           <div className="md:block">
-            <TurnosTable turnos={turnosPeluqueria} onUpdate={handleUpdateStatus} isUpdating={isUpdating} currentView={vistaActual} onDocumentar={setModalTurno} onRequestCancel={handleRequestCancel} />
+            <TurnosTable turnos={turnosPeluqueria} onUpdate={handleUpdateStatus} isUpdating={isUpdating} currentView={vistaActual} onDocumentar={setModalTurno} onRequestCancel={handleRequestCancel} onDeleteTurno={handleDeleteTurno} allowDeletePermanently={vistaActual === 'todos'} />
           </div>
 
           {/* Vista Móvil (Tarjetas) */}
           <div className="md:hidden">
             {turnosPeluqueria.map(turno => (
-              <TurnoCard key={turno.id} turno={turno} onUpdate={handleUpdateStatus} isUpdating={isUpdating} currentView={vistaActual} onDocumentar={setModalTurno} onRequestCancel={handleRequestCancel} />
+              <TurnoCard key={turno.id} turno={turno} onUpdate={handleUpdateStatus} isUpdating={isUpdating} currentView={vistaActual} onDocumentar={setModalTurno} onRequestCancel={handleRequestCancel} allowDeletePermanently={vistaActual === 'todos'} onDeleteTurno={handleDeleteTurno} />
             ))}
             {!turnosPeluqueria.length && (
               <p className="text-center text-gray-500 mt-4">No hay turnos para mostrar.</p>
