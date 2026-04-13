@@ -28,7 +28,7 @@ export async function getTurnsForAdminDashboard() {
                                  .get();
 
     if (turnosSnapshot.empty) {
-      return { success: true, data: { hoy: [], proximos: [], finalizados: [], reprogramar: [], mensual: [] } };
+      return { success: true, data: { hoy: [], proximos: [], finalizados: [], reprogramar: [], mensual: [], todos: [] } };
     }
 
     const usersCache = new Map();
@@ -110,6 +110,7 @@ export async function getTurnsForAdminDashboard() {
     const finalizados = [];
     const reprogramar = [];
     const mensual = [];
+    const todos = [...enrichedTurnos];
 
     for (const turno of enrichedTurnos) {
       if (!turno.fecha) continue;
@@ -148,7 +149,9 @@ export async function getTurnsForAdminDashboard() {
     reprogramar.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
     mensual.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
-    return { success: true, data: { hoy, proximos, finalizados, reprogramar, mensual } };
+    todos.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+    return { success: true, data: { hoy, proximos, finalizados, reprogramar, mensual, todos } };
 
   } catch (error) {
     console.error("Error en getTurnsForAdminDashboard:", error);
@@ -230,5 +233,42 @@ export async function documentarTurno({ userId, mascotaId, turnoId, comentario, 
   } catch (error) {
     console.error("Error en documentarTurno:", error);
     return { success: false, error: `Error al documentar el turno: ${error.message}` };
+  }
+}
+
+export async function borrarTurnoCompletoAdmin({ userId, mascotaId, turnoId }) {
+  try {
+    if (!userId || !mascotaId || !turnoId) {
+      throw new Error('Faltan parámetros requeridos para borrar el turno.');
+    }
+
+    const turnoRef = db
+      .collection('users')
+      .doc(userId)
+      .collection('mascotas')
+      .doc(mascotaId)
+      .collection('turnos')
+      .doc(turnoId);
+
+    const turnoDoc = await turnoRef.get();
+    if (!turnoDoc.exists) {
+      throw new Error('No se encontró el turno a eliminar.');
+    }
+
+    if (typeof db.recursiveDelete === 'function') {
+      await db.recursiveDelete(turnoRef);
+    } else {
+      await turnoRef.delete();
+    }
+
+    revalidatePath('/admin/turnos');
+    revalidatePath('/admin/empleados/transporte');
+    revalidatePath('/admin/empleados/peluqueria');
+    revalidatePath('/turnos/mis-turnos');
+
+    return { success: true, message: 'Turno eliminado por completo.' };
+  } catch (error) {
+    console.error('Error en borrarTurnoCompletoAdmin:', error);
+    return { success: false, error: `Error al borrar el turno: ${error.message}` };
   }
 }
