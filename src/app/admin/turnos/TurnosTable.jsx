@@ -15,6 +15,7 @@ export default function TurnosTable({ turnos, onUpdate, isUpdating, currentView,
     veterinaria: 'bg-indigo-200 text-indigo-800',
     'peluqueria iniciada': 'bg-pink-200 text-pink-800',
     'peluqueria finalizada': 'bg-purple-200 text-purple-800',
+    'devolucion confirmada': 'bg-fuchsia-200 text-fuchsia-800',
     devolviendo: 'bg-amber-200 text-amber-800',
     'servicio terminado': 'bg-green-200 text-green-800',
   };

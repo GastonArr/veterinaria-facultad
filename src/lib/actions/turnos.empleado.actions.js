@@ -220,6 +220,7 @@ export async function updateTurnoStatusByEmpleado(params) {
     revalidatePath('/admin/turnos');
     revalidatePath('/admin/empleados/transporte');
     revalidatePath('/admin/empleados/peluqueria');
+    revalidatePath('/turnos/mis-turnos');
     
     return { success: true, message: `Turno actualizado a ${newStatus}.` };
 
