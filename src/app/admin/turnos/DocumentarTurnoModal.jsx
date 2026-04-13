@@ -33,7 +33,14 @@ export default function DocumentarTurnoModal({ isOpen, onClose, turno, medicamen
     });
   };
 
+  const esPeluqueria = turno?.tipo === 'peluqueria';
+
   const handleSave = async () => {
+    if (esPeluqueria && !comentario.trim()) {
+      setError('Para turnos de peluquería, el historial del corte es obligatorio.');
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setSuccess(false);
@@ -44,7 +51,7 @@ export default function DocumentarTurnoModal({ isOpen, onClose, turno, medicamen
         mascotaId: turno.mascotaId,
         turnoId: turno.id,
         comentario,
-        medicamentosSuministrados: selectedMedicamentos
+        medicamentosSuministrados: esPeluqueria ? [] : selectedMedicamentos
       });
 
       if (result.success) {
@@ -87,23 +94,25 @@ export default function DocumentarTurnoModal({ isOpen, onClose, turno, medicamen
             {/* Comentario */}
             <div>
               <label htmlFor="comentario" className="block mb-2 text-sm font-medium text-gray-900">
-                Comentarios / Historia Clínica
+                {esPeluqueria ? 'Historial del corte' : 'Comentarios / Historia Clínica'}
               </label>
               <p className="mb-2 text-xs text-gray-500">
-                Registrá aquí el historial de la visita (diagnóstico, evolución, indicaciones y observaciones clínicas).
+                {esPeluqueria
+                  ? 'Registrá aquí el detalle del corte y observaciones de peluquería.'
+                  : 'Registrá aquí el historial de la visita (diagnóstico, evolución, indicaciones y observaciones clínicas).'}
               </p>
               <textarea
                 id="comentario"
                 rows="4"
                 className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Escribe aquí las observaciones de la consulta..."
+                placeholder={esPeluqueria ? 'Escribe aquí el detalle del corte realizado...' : 'Escribe aquí las observaciones de la consulta...'}
                 value={comentario}
                 onChange={(e) => setComentario(e.target.value)}
               ></textarea>
             </div>
 
             {/* Medicamentos */}
-            <div>
+            {!esPeluqueria && <div>
               <label className="block mb-2 text-sm font-medium text-gray-900">
                 Medicamentos Suministrados (Opcional)
               </label>
@@ -137,7 +146,7 @@ export default function DocumentarTurnoModal({ isOpen, onClose, turno, medicamen
                   })}
                 </div>
               )}
-            </div>
+            </div>}
             
             {/* Feedback */}
             {error && <div className="p-3 text-sm text-red-700 bg-red-100 rounded-lg">{error}</div>}

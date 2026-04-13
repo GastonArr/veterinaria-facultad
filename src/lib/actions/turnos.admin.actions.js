@@ -203,9 +203,22 @@ export async function documentarTurno({ userId, mascotaId, turnoId, comentario, 
     
     const turnoRef = db.collection('users').doc(userId).collection('mascotas').doc(mascotaId).collection('turnos').doc(turnoId);
     
+    const turnoDoc = await turnoRef.get();
+    if (!turnoDoc.exists) {
+      throw new Error("No se encontró el turno a documentar.");
+    }
+
+    const turnoData = turnoDoc.data();
+    const esPeluqueria = turnoData?.tipo === 'peluqueria';
+    const comentarioNormalizado = (comentario || '').trim();
+
+    if (esPeluqueria && !comentarioNormalizado) {
+      throw new Error("El historial del corte es obligatorio para turnos de peluquería.");
+    }
+
     const updateData = {
-      comentario: comentario || '',
-      medicamentosSuministrados: medicamentosSuministrados || []
+      comentario: comentarioNormalizado,
+      medicamentosSuministrados: esPeluqueria ? [] : (medicamentosSuministrados || [])
     };
 
     await turnoRef.update(updateData);

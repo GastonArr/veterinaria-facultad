@@ -413,7 +413,7 @@ export default function AdminCarnetSanitarioPage({ params }) {
                         tipo: data.tipo === 'peluqueria' ? 'Peluquería' : 'Visita Clínica',
                         servicio: data.servicioNombre,
                         comentario: data.comentario || null,
-                        medicamentos: data.medicamentosSuministrados || [],
+                        medicamentos: data.tipo === 'peluqueria' ? [] : (data.medicamentosSuministrados || []),
                         fechaOriginal: data.fecha,
                         fechaCreacion: { toDate: () => new Date(data.fecha) }
                     };
