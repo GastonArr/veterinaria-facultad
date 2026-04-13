@@ -111,28 +111,22 @@ export async function getTurnsForAdminDashboard() {
     const reprogramar = [];
     const mensual = [];
 
-    // Define los estados que se consideran "activos" para el día de hoy.
-    const estadosActivosHoy = [
-      'confirmado', 
-      'buscando', 
-      'buscado', 
-      'veterinaria', 
-      'peluqueria iniciada',
-      'peluqueria finalizada',
-      'devolviendo'
-    ];
-
     for (const turno of enrichedTurnos) {
       if (!turno.fecha) continue;
       const fechaTurno = dayjs(turno.fecha);
+      const esDeHoy =
+        (fechaTurno.isAfter(startOfTodayInArgentina) || fechaTurno.isSame(startOfTodayInArgentina)) &&
+        (fechaTurno.isBefore(endOfTodayInArgentina) || fechaTurno.isSame(endOfTodayInArgentina));
+
+      // La pestaña "Turnos del Día" debe mostrar TODOS los turnos del día sin filtrar por estado.
+      if (esDeHoy) {
+        hoy.push(turno);
+      }
 
       if (turno.estado === 'reprogramar') {
         reprogramar.push(turno);
       } else if (turno.estado === 'finalizado' || turno.estado === 'cancelado' || turno.estado === 'servicio terminado') {
         finalizados.push(turno);
-      // Condición CORREGIDA para los turnos de hoy
-      } else if (fechaTurno.isAfter(startOfTodayInArgentina) && fechaTurno.isBefore(endOfTodayInArgentina) && estadosActivosHoy.includes(turno.estado)) {
-        hoy.push(turno);
       } else if (fechaTurno.isAfter(nowInArgentina) && turno.estado === 'pendiente') {
         proximos.push(turno);
       } else if (
