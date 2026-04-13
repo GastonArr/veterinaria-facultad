@@ -20,6 +20,7 @@ function TurnoCard({ turno, onUpdate, isUpdating, currentView, onDocumentar, onR
     finalizado: 'bg-green-200 text-green-800',
     cancelado: 'bg-red-200 text-red-800',
     reprogramado: 'bg-orange-200 text-orange-800',
+    'traslado confirmado': 'bg-emerald-200 text-emerald-800',
     buscando: 'bg-cyan-200 text-cyan-800',
     buscado: 'bg-sky-200 text-sky-800',
     veterinaria: 'bg-indigo-200 text-indigo-800',

@@ -89,6 +89,9 @@ export default function DocumentarTurnoModal({ isOpen, onClose, turno, medicamen
               <label htmlFor="comentario" className="block mb-2 text-sm font-medium text-gray-900">
                 Comentarios / Historia Clínica
               </label>
+              <p className="mb-2 text-xs text-gray-500">
+                Registrá aquí el historial de la visita (diagnóstico, evolución, indicaciones y observaciones clínicas).
+              </p>
               <textarea
                 id="comentario"
                 rows="4"
@@ -104,6 +107,9 @@ export default function DocumentarTurnoModal({ isOpen, onClose, turno, medicamen
               <label className="block mb-2 text-sm font-medium text-gray-900">
                 Medicamentos Suministrados (Opcional)
               </label>
+              <p className="mb-2 text-xs text-gray-500">
+                Seleccioná los medicamentos aplicados durante la atención para que queden asentados en el historial del turno.
+              </p>
               {medsEntries.length === 0 ? (
                 <p className="text-sm text-gray-500 italic">No hay medicamentos en el catálogo (revisa la pestaña de servicios).</p>
               ) : (
