@@ -12,7 +12,8 @@ const ActionButton = ({ turno, onUpdate, isLoading }) => {
         'traslado confirmado': { text: 'Iniciar Recogida', newStatus: 'buscando', className: 'bg-blue-600 hover:bg-blue-700' },
         buscando: { text: 'Mascota Recogida', newStatus: 'buscado', className: 'bg-cyan-600 hover:bg-cyan-700' },
         buscado: { text: 'Entregar en Veterinaria', newStatus: 'veterinaria', className: 'bg-indigo-600 hover:bg-indigo-700' },
-        'peluqueria finalizada': { text: 'Iniciar Devolución', newStatus: 'devolviendo', className: 'bg-orange-500 hover:bg-orange-600' },
+        'peluqueria finalizada': { text: 'Confirmar traslado a domicilio', newStatus: 'devolucion confirmada', className: 'bg-purple-600 hover:bg-purple-700' },
+        'devolucion confirmada': { text: 'Iniciar Devolución', newStatus: 'devolviendo', className: 'bg-orange-500 hover:bg-orange-600' },
         devolviendo: { text: 'Mascota Entregada', newStatus: 'servicio terminado', className: 'bg-green-600 hover:bg-green-700' },
     };
 
@@ -60,7 +61,7 @@ const TransporteClientView = ({ initialTurnos }) => {
 
     const getTripType = (estado) => {
         const recogidaStates = ['confirmado', 'traslado confirmado', 'buscando', 'buscado'];
-        const entregaStates = ['peluqueria finalizada', 'devolviendo'];
+        const entregaStates = ['peluqueria finalizada', 'devolucion confirmada', 'devolviendo'];
         if (recogidaStates.includes(estado)) return { text: 'Recogida', className: 'bg-blue-100 text-blue-800' };
         if (entregaStates.includes(estado)) return { text: 'Entrega', className: 'bg-green-100 text-green-800' };
         return { text: 'En Local', className: 'bg-gray-100 text-gray-800' };
@@ -73,6 +74,7 @@ const TransporteClientView = ({ initialTurnos }) => {
         buscado: 'bg-sky-100 text-sky-800',
         veterinaria: 'bg-indigo-100 text-indigo-800',
         'peluqueria finalizada': 'bg-purple-100 text-purple-800',
+        'devolucion confirmada': 'bg-fuchsia-100 text-fuchsia-800',
         devolviendo: 'bg-orange-100 text-orange-800',
         'servicio terminado': 'bg-lime-200 text-lime-900',
     };

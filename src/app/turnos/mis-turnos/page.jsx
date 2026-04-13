@@ -23,6 +23,7 @@ const TurnoCard = ({ turno, compactarCancelado = false }) => {
         veterinaria: 'bg-indigo-100 text-indigo-800',
         'peluqueria iniciada': 'bg-pink-100 text-pink-800',
         'peluqueria finalizada': 'bg-purple-100 text-purple-800',
+        'devolucion confirmada': 'bg-fuchsia-100 text-fuchsia-800',
         devolviendo: 'bg-orange-100 text-orange-800',
         'servicio terminado': 'bg-lime-100 text-lime-800',
         finalizado: 'bg-green-100 text-green-800',
@@ -54,6 +55,7 @@ const TurnoCard = ({ turno, compactarCancelado = false }) => {
         'peluqueria finalizada': turno.necesitaTraslado
             ? 'La peluquería finalizó. El transporte iniciará la devolución.'
             : 'La peluquería finalizó la atención de tu mascota.',
+        'devolucion confirmada': 'El transporte confirmó la devolución al domicilio y está por iniciar el traslado.',
         devolviendo: 'El transporte va en camino para devolver a tu mascota.',
         'servicio terminado': 'La atención finalizó y tu mascota ya fue entregada.',
         finalizado: 'La atención veterinaria fue finalizada.',
