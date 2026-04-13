@@ -82,10 +82,10 @@ const TransporteClientView = ({ initialTurnos }) => {
     return (
         <div className="p-4 md:p-8 bg-white text-gray-900 min-h-screen">
             <div className="mb-6">
-                <Link href="/mis-datos">
+                <Link href="/admin/empleados">
                     <span className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors duration-200 cursor-pointer">
                         <FaArrowLeft className="mr-2" />
-                        Volver a Mis Datos
+                        Volver al Panel Principal
                     </span>
                 </Link>
             </div>
