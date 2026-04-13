@@ -192,7 +192,7 @@ export async function getTurnsForPeluqueria() {
 export async function updateTurnoStatusByEmpleado(params) {
   try {
     // Aceptamos tanto 'userId' como 'clienteId' para ser más flexibles.
-    const { userId, clienteId, mascotaId, turnoId, newStatus } = params;
+    const { userId, clienteId, mascotaId, turnoId, newStatus, comentario } = params;
     
     // Usamos el que esté disponible.
     const finalUserId = userId || clienteId;
@@ -203,8 +203,18 @@ export async function updateTurnoStatusByEmpleado(params) {
     }
     
     const turnoRef = db.collection('users').doc(finalUserId).collection('mascotas').doc(mascotaId).collection('turnos').doc(turnoId);
-    
-    await turnoRef.update({ estado: newStatus });
+    const updateData = { estado: newStatus };
+
+    if (newStatus === 'peluqueria finalizada') {
+      const comentarioNormalizado = (comentario || '').trim();
+      if (!comentarioNormalizado) {
+        throw new Error("Debes completar el historial del corte antes de finalizar la peluquería.");
+      }
+      updateData.comentario = comentarioNormalizado;
+      updateData.medicamentosSuministrados = [];
+    }
+
+    await turnoRef.update(updateData);
 
     // Revalidamos las rutas para que los cambios se reflejen en la UI
     revalidatePath('/admin/turnos');

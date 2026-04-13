@@ -43,21 +43,57 @@ const PeluqueriaClientView = ({ initialTurnos }) => {
             : []
     );
     const [loadingTurnoId, setLoadingTurnoId] = useState(null);
+    const [turnoParaFinalizar, setTurnoParaFinalizar] = useState(null);
+    const [comentarioCorte, setComentarioCorte] = useState('');
+    const [modalError, setModalError] = useState('');
 
-    const handleStatusUpdate = async ({ clienteId, mascotaId, turnoId, newStatus }) => {
+    const handleStatusUpdate = async ({ clienteId, mascotaId, turnoId, newStatus, comentario }) => {
         setLoadingTurnoId(turnoId);
-        const result = await updateTurnoStatusByEmpleado({ clienteId, mascotaId, turnoId, newStatus });
+        const result = await updateTurnoStatusByEmpleado({ clienteId, mascotaId, turnoId, newStatus, comentario });
         
         if (result.success) {
             setTurnos(prevTurnos =>
                 prevTurnos.map(t =>
-                    t.id === turnoId ? { ...t, estado: newStatus } : t
+                    t.id === turnoId ? { ...t, estado: newStatus, comentario: comentario || t.comentario } : t
                 )
             );
         } else {
-            console.error("Fallo al actualizar el turno:", result.error);
+            setModalError(result.error || "No se pudo actualizar el turno.");
         }
         setLoadingTurnoId(null);
+        return result;
+    };
+
+    const handleAction = async ({ clienteId, mascotaId, turnoId, newStatus }) => {
+      if (newStatus === 'peluqueria finalizada') {
+        const turno = turnos.find((t) => t.id === turnoId);
+        setTurnoParaFinalizar(turno || null);
+        setComentarioCorte(turno?.comentario || '');
+        setModalError('');
+        return;
+      }
+      await handleStatusUpdate({ clienteId, mascotaId, turnoId, newStatus });
+    };
+
+    const handleConfirmarFinalizacion = async () => {
+      if (!turnoParaFinalizar) return;
+      if (!comentarioCorte.trim()) {
+        setModalError('El historial del corte es obligatorio para finalizar.');
+        return;
+      }
+
+      const result = await handleStatusUpdate({
+        clienteId: turnoParaFinalizar.clienteId,
+        mascotaId: turnoParaFinalizar.mascotaId,
+        turnoId: turnoParaFinalizar.id,
+        newStatus: 'peluqueria finalizada',
+        comentario: comentarioCorte.trim(),
+      });
+
+      if (result?.success) {
+        setTurnoParaFinalizar(null);
+        setComentarioCorte('');
+      }
     };
     
     const statusColors = {
@@ -116,7 +152,7 @@ const PeluqueriaClientView = ({ initialTurnos }) => {
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                         <ActionButton
                                             turno={turno}
-                                            onUpdate={handleStatusUpdate}
+                                            onUpdate={handleAction}
                                             isLoading={loadingTurnoId === turno.id}
                                         />
                                     </td>
@@ -125,6 +161,46 @@ const PeluqueriaClientView = ({ initialTurnos }) => {
                         </tbody>
                     </table>
                 </div>
+            )}
+
+            {turnoParaFinalizar && (
+              <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+                <div className="bg-white w-full max-w-lg rounded-xl shadow-xl p-6">
+                  <h2 className="text-lg font-bold text-gray-800 mb-2">Finalizar peluquería</h2>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Completá el historial del corte de <strong>{turnoParaFinalizar.mascota?.nombre}</strong>. Este campo es obligatorio.
+                  </p>
+                  <textarea
+                    value={comentarioCorte}
+                    onChange={(e) => setComentarioCorte(e.target.value)}
+                    placeholder="Detalle del corte realizado, observaciones y recomendaciones..."
+                    rows={5}
+                    className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                  />
+                  {modalError && <p className="text-sm text-red-600 mt-3">{modalError}</p>}
+                  <div className="flex justify-end gap-2 mt-5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTurnoParaFinalizar(null);
+                        setComentarioCorte('');
+                        setModalError('');
+                      }}
+                      className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleConfirmarFinalizacion}
+                      disabled={loadingTurnoId === turnoParaFinalizar.id}
+                      className="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-400"
+                    >
+                      {loadingTurnoId === turnoParaFinalizar.id ? 'Guardando...' : 'Guardar y finalizar'}
+                    </button>
+                  </div>
+                </div>
+              </div>
             )}
         </div>
     );
