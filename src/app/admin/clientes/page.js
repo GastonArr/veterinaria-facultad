@@ -1,6 +1,4 @@
 import { getAllUsers } from '@/lib/actions/admin.actions.js';
-import Link from 'next/link';
-import { FaArrowLeft } from 'react-icons/fa';
 import ClientesTable from './ClientesTable.jsx';
 
 export default async function ClientesPage() {
@@ -10,14 +8,6 @@ export default async function ClientesPage() {
     return (
       <div className="p-4 sm:p-6 lg:p-8">
         <div className="max-w-7xl mx-auto">
-            <div className="mb-6">
-                <Link href="/admin">
-                    <span className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors duration-200 cursor-pointer">
-                        <FaArrowLeft className="mr-2" />
-                        Volver al Panel Principal
-                    </span>
-                </Link>
-            </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Gestión de Clientes</h1>
           <div className="bg-white p-6 rounded-2xl shadow-lg">
             <p className="text-red-500">{result.error || "No se pudieron cargar los clientes."}</p>
@@ -32,14 +22,6 @@ export default async function ClientesPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-6">
-            <Link href="/admin">
-                <span className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors duration-200 cursor-pointer">
-                    <FaArrowLeft className="mr-2" />
-                    Volver al Panel Principal
-                </span>
-            </Link>
-        </div>
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Gestión de Clientes</h1>
         <p className="text-gray-600 mb-8">Aquí podrás ver y administrar la información de los dueños de las mascotas.</p>
         
