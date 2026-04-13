@@ -146,7 +146,7 @@ export default function CompletarPerfilPage() {
       });
       if (result.success) {
         toast.success('¡Perfil completado! Redirigiendo...');
-        setTimeout(() => router.push(result.role === 'admin' ? '/admin' : '/'), 1500);
+        setTimeout(() => router.push('/'), 1500);
       } else {
         toast.error(result.error || 'Hubo un error al guardar tu perfil.');
       }
