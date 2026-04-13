@@ -196,9 +196,9 @@ export default function AdminTurnosDashboard() {
   if (loading && !isUpdating) return <div className="text-center p-10 font-semibold text-lg text-gray-600">Cargando turnos...</div>;
   if (error) return <div className="text-center p-10 text-red-600 bg-red-100 rounded-lg shadow-md"><strong>Error:</strong> {error}</div>;
 
-  const getTabStyle = (tabName) => `px-6 py-3 font-semibold rounded-t-lg focus:outline-none transition-colors ${vistaActual === tabName ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`;
+  const getTabStyle = (tabName) => `whitespace-nowrap px-4 sm:px-6 py-3 text-sm sm:text-base font-semibold rounded-t-lg focus:outline-none transition-colors ${vistaActual === tabName ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`;
   const getCanceladosTabStyle = () => {
-    const baseStyle = 'px-6 py-3 font-semibold rounded-t-lg focus:outline-none transition-colors ';
+    const baseStyle = 'whitespace-nowrap px-4 sm:px-6 py-3 text-sm sm:text-base font-semibold rounded-t-lg focus:outline-none transition-colors ';
     const isActive = vistaActual === 'paraProgramar';
     const hasItems = turnos.paraProgramar && turnos.paraProgramar.length > 0;
     if (isActive) return baseStyle + 'bg-orange-500 text-white';
@@ -207,10 +207,10 @@ export default function AdminTurnosDashboard() {
   };
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
-      <h1 className="text-3xl font-bold mb-6 text-gray-800">Panel de Administración de Turnos</h1>
+    <div className="p-3 sm:p-6 bg-gray-100 min-h-screen">
+      <h1 className="text-2xl sm:text-3xl font-bold mb-6 text-gray-800">Panel de Administración de Turnos</h1>
 
-      <div className="flex border-b-2 border-blue-600 mb-6 flex-wrap">
+      <div className="flex border-b-2 border-blue-600 mb-6 gap-2 overflow-x-auto pb-2">
         <button className={getTabStyle('hoy')} onClick={() => setVistaActual('hoy')}>Turnos del Día</button>
         <button className={getTabStyle('proximos')} onClick={() => setVistaActual('proximos')}>Próximos a Confirmar</button>
         <button className={getTabStyle('mensual')} onClick={() => setVistaActual('mensual')}>Turnos del Mes</button>
@@ -238,7 +238,7 @@ export default function AdminTurnosDashboard() {
           </div>
 
           {/* Vista Escritorio (Tabla) */}
-          <div className="md:block ">
+          <div className="hidden md:block">
             <TurnosTable turnos={turnosClinica} onUpdate={handleUpdateStatus} isUpdating={isUpdating} currentView={vistaActual} onDocumentar={setModalTurno} onRequestCancel={handleRequestCancel} onDeleteTurno={handleDeleteTurno} allowDeletePermanently={vistaActual === 'todos'} />
           </div>
 
@@ -261,7 +261,7 @@ export default function AdminTurnosDashboard() {
           </div>
 
           {/* Vista Escritorio (Tabla) */}
-          <div className="md:block">
+          <div className="hidden md:block">
             <TurnosTable turnos={turnosPeluqueria} onUpdate={handleUpdateStatus} isUpdating={isUpdating} currentView={vistaActual} onDocumentar={setModalTurno} onRequestCancel={handleRequestCancel} onDeleteTurno={handleDeleteTurno} allowDeletePermanently={vistaActual === 'todos'} />
           </div>
 

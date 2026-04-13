@@ -87,7 +87,8 @@ const TransporteClientView = ({ initialTurnos }) => {
             {turnos.length === 0 ? (
                 <p className="text-gray-500 text-center mt-12">No hay tareas de transporte para hoy.</p>
             ) : (
-                <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
+                <>
+                <div className="hidden md:block overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
                     <table className="min-w-full bg-white">
                         <thead className="bg-gray-50">
                             <tr>
@@ -130,6 +131,28 @@ const TransporteClientView = ({ initialTurnos }) => {
                         </tbody>
                     </table>
                 </div>
+                <div className="grid gap-3 md:hidden">
+                    {turnos.map((turno) => {
+                        const tripType = getTripType(turno.estado);
+                        return (
+                            <article key={turno.id} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                                <div className="flex items-center justify-between">
+                                    <p className="font-semibold text-gray-900">{turno.mascota.nombre}</p>
+                                    <span className="text-sm text-gray-600">{new Date(turno.fecha).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}hs</span>
+                                </div>
+                                <p className="mt-1 text-sm text-gray-600">{turno.user.direccion}</p>
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${tripType.className}`}>{tripType.text}</span>
+                                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${statusColors[turno.estado] || 'bg-gray-100 text-gray-800'}`}>{turno.estado}</span>
+                                </div>
+                                <div className="mt-3">
+                                    <ActionButton turno={turno} onUpdate={handleStatusUpdate} isLoading={loadingTurnoId === turno.id} />
+                                </div>
+                            </article>
+                        );
+                    })}
+                </div>
+                </>
             )}
         </div>
     );
