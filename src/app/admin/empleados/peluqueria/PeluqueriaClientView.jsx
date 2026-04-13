@@ -1,9 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
-import { FaArrowLeft } from 'react-icons/fa';
 import { updateTurnoStatusByEmpleado } from '@/lib/actions/turnos.empleado.actions';
+import BackLink from '@/app/components/BackLink';
 
 // --- Componente para el Botón de Acción Dinámico ---
 const ActionButton = ({ turno, onUpdate, isLoading }) => {
@@ -112,12 +111,7 @@ const PeluqueriaClientView = ({ initialTurnos }) => {
     return (
         <div className="p-4 md:p-8 bg-white text-gray-900 min-h-screen">
             <div className="mb-6">
-                <Link href="/admin/empleados">
-                    <span className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors duration-200 cursor-pointer">
-                        <FaArrowLeft className="mr-2" />
-                        Volver al Panel Principal
-                    </span>
-                </Link>
+                <BackLink href="/admin/empleados" />
             </div>
             <h1 className="text-2xl font-bold text-gray-800 mb-2">Panel de Peluquería</h1>
             <p className="text-gray-600 mb-8">Gestiona los turnos de peluquería del día de hoy.</p>
