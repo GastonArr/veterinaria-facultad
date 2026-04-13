@@ -39,7 +39,7 @@ export default function LoginPage() {
     useEffect(() => {
         if (user) {
             if (user.profileCompleted) {
-                router.push(user.role === 'admin' ? '/admin' : '/');
+                router.push('/');
             } else {
                 router.push('/completar-perfil');
             }

@@ -20,11 +20,12 @@ export default function HomePageClient({ serverComponents }) {
 
   if (user) {
     const displayIdentifier = user.displayName?.split(' ')[0] || user.email?.split('@')[0] || 'Equipo';
+    const isOwner = user.role === 'dueño';
 
     return (
       <>
-        <SubHeader />
-        <Dashboard>
+        {isOwner && <SubHeader />}
+        <Dashboard canRequestTurn={isOwner}>
           <RolePortalHero role={user.role} name={displayIdentifier} />
 
           {/* Sección de Adopciones */}
