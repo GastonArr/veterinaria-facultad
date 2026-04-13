@@ -34,6 +34,11 @@ function TurnoCard({ turno, onUpdate, isUpdating, currentView, onDocumentar, onR
     onUpdate(turno.userId, turno.mascotaId, turno.id, newStatus);
   };
 
+  const canCancelTurno = () => {
+    const estadosNoCancelables = ['cancelado', 'peluqueria finalizada', 'servicio terminado', 'finalizado'];
+    return currentView !== 'finalizados' && currentView !== 'paraProgramar' && !estadosNoCancelables.includes(turno.estado);
+  };
+
   const formattedDate = () => {
     const date = new Date(turno.fecha);
     if (currentView === 'hoy') return date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) + 'hs';
@@ -61,7 +66,7 @@ function TurnoCard({ turno, onUpdate, isUpdating, currentView, onDocumentar, onR
             <>
               {currentView === 'proximos' && turno.estado === 'pendiente' && (<button onClick={() => handleAction('confirmado')} className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition-colors">Confirmar</button>)}
               {currentView === 'hoy' && turno.estado === 'confirmado' && (<button onClick={() => handleAction('finalizado')} className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">Finalizar</button>)}
-              {currentView !== 'finalizados' && currentView !== 'paraProgramar' && turno.estado !== 'cancelado' && (
+              {canCancelTurno() && (
                 <button
                   onClick={() => (onRequestCancel ? onRequestCancel(turno) : handleAction('cancelado'))}
                   className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
@@ -191,7 +196,7 @@ export default function AdminTurnosDashboard() {
   if (error) return <div className="text-center p-10 text-red-600 bg-red-100 rounded-lg shadow-md"><strong>Error:</strong> {error}</div>;
 
   const getTabStyle = (tabName) => `px-6 py-3 font-semibold rounded-t-lg focus:outline-none transition-colors ${vistaActual === tabName ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`;
-  const getParaProgramarTabStyle = () => {
+  const getCanceladosTabStyle = () => {
     const baseStyle = 'px-6 py-3 font-semibold rounded-t-lg focus:outline-none transition-colors ';
     const isActive = vistaActual === 'paraProgramar';
     const hasItems = turnos.paraProgramar && turnos.paraProgramar.length > 0;
@@ -208,7 +213,7 @@ export default function AdminTurnosDashboard() {
         <button className={getTabStyle('hoy')} onClick={() => setVistaActual('hoy')}>Turnos del Día</button>
         <button className={getTabStyle('proximos')} onClick={() => setVistaActual('proximos')}>Próximos a Confirmar</button>
         <button className={getTabStyle('mensual')} onClick={() => setVistaActual('mensual')}>Turnos del Mes</button>
-        <button className={getParaProgramarTabStyle()} onClick={() => setVistaActual('paraProgramar')}>Para Programar ({turnos.paraProgramar?.length || 0})</button>
+        <button className={getCanceladosTabStyle()} onClick={() => setVistaActual('paraProgramar')}>Cancelados ({turnos.paraProgramar?.length || 0})</button>
         <button className={getTabStyle('finalizados')} onClick={() => setVistaActual('finalizados')}>Historial</button>
         <button className={getTabStyle('todos')} onClick={() => setVistaActual('todos')}>Borrado de Pruebas</button>
       </div>
