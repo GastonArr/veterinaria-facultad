@@ -50,6 +50,8 @@ const TurnoCard = ({ turno, compactarCancelado = false }) => {
     const statusMessages = {
         confirmado: 'La veterinaria confirmó tu turno. Ya está agendado.',
         'traslado confirmado': `El transporte confirmó tu traslado para las ${horaTurno || '--:--'} hs.`,
+        buscando: 'El transporte está yendo a buscar a tu mascota.',
+        buscado: 'Tu mascota ya fue retirada y está en camino a la veterinaria.',
         veterinaria: 'Tu mascota ya llegó a la veterinaria.',
         'peluqueria iniciada': 'La peluquería ya comenzó con la atención de tu mascota.',
         'peluqueria finalizada': turno.necesitaTraslado

@@ -117,13 +117,44 @@ export async function getTurnosByUserId({ userId }) {
     const resultados = await Promise.all(processedTurnosPromises);
     const turnosValidos = resultados.filter(t => t !== null);
 
+    const estadosActivos = new Set([
+      'pendiente',
+      'confirmado',
+      'traslado confirmado',
+      'buscando',
+      'buscado',
+      'veterinaria',
+      'peluqueria iniciada',
+      'peluqueria finalizada',
+      'devolucion confirmada',
+      'devolviendo',
+      'reprogramar',
+    ]);
+
+    const estadosFinalizados = new Set([
+      'finalizado',
+      'servicio terminado',
+      'cancelado',
+    ]);
+
     for (const turno of turnosValidos) {
-        const fechaTurno = new Date(turno.fecha);
-        if (turno.estado === 'finalizado' || turno.estado === 'cancelado' || (fechaTurno < ahora && turno.estado !== 'reprogramar')) {
-            historial.push(turno);
-        } else {
-            proximos.push(turno);
-        }
+      const fechaTurno = new Date(turno.fecha);
+
+      if (estadosFinalizados.has(turno.estado)) {
+        historial.push(turno);
+        continue;
+      }
+
+      if (estadosActivos.has(turno.estado)) {
+        proximos.push(turno);
+        continue;
+      }
+
+      if (fechaTurno < ahora) {
+        historial.push(turno);
+      } else {
+        proximos.push(turno);
+      }
     }
 
     proximos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
