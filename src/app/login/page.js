@@ -229,7 +229,7 @@ export default function LoginPage() {
                                     <input name="nombre" placeholder="Nombre" value={formData.nombre} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"/>
                                     <input name="apellido" placeholder="Apellido" value={formData.apellido} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"/>
                                 </div>
-                                <input name="dni" placeholder="12.345.678" value={formData.dni} onChange={handleInputChange} required maxLength="10" className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"/>
+                                <input name="dni" placeholder="DNI" value={formData.dni} onChange={handleInputChange} required maxLength="10" className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"/>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <input value={formData.provincia} disabled className="w-full p-3 bg-gray-100 border border-gray-200 rounded-lg text-gray-600"/>
                                     <input value={formData.ciudad} disabled className="w-full p-3 bg-gray-100 border border-gray-200 rounded-lg text-gray-600"/>
