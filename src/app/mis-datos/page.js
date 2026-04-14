@@ -6,6 +6,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { actualizarPerfil } from '@/lib/actions/user.actions.js';
 import SubHeader from '@/app/components/SubHeader';
+import BackLink from '@/app/components/BackLink';
 import { FaUser, FaIdCard, FaPhone, FaMapMarkerAlt, FaExclamationTriangle, FaSave, FaEdit, FaTimes, FaKey } from 'react-icons/fa';
 import { BARRIOS_SANTA_ROSA, CIUDAD_FIJA, PROVINCIA_FIJA, construirDireccion } from '@/lib/utils/direccion';
 
@@ -211,6 +212,7 @@ export default function MisDatosPage() {
         <>
             <SubHeader title="Mis Datos" />
             <main className="max-w-4xl mx-auto p-4 md:p-8">
+                <BackLink href="/" className="mb-4 inline-block" />
                 <Notification message={notification.message} type={notification.type} onClose={() => setNotification({ message: '', type: '' })} />
 
                 <form onSubmit={handleSubmit}>
