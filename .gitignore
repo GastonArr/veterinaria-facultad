@@ -32,3 +32,6 @@ yarn-error.log*
 
 # Firebase credentials - CRITICAL
 firebase-admin-sdk.json
+
+# Firebase CLI debug artifacts
+firebase-debug.log
