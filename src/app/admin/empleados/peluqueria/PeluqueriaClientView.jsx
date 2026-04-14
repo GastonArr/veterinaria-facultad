@@ -115,6 +115,7 @@ const PeluqueriaClientView = ({ initialTurnos }) => {
         <div className="grid gap-4">
           {orderedTurnos.map((turno) => {
             const user = turno.user || {};
+            const action = ACTIONS_BY_STATUS[turno.estado];
             return (
               <article key={turno.id} className="rounded-2xl border border-slate-200 bg-white p-4 md:p-5 shadow-sm">
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
@@ -130,9 +131,11 @@ const PeluqueriaClientView = ({ initialTurnos }) => {
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${STATUS_COLORS[turno.estado] || STATUS_COLORS.default}`}>{turno.estado}</span>
-                    <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-700">
-                      Próxima acción: {ACTIONS_BY_STATUS[turno.estado]?.text || 'Sin acción'}
-                    </span>
+                    {action && (
+                      <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-700">
+                        Próxima acción: {action.text}
+                      </span>
+                    )}
                   </div>
                 </div>
 

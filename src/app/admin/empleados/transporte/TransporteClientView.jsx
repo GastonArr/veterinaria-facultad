@@ -105,9 +105,11 @@ const TransporteClientView = ({ initialTurnos }) => {
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${STATUS_COLORS[estado] || 'bg-gray-100 text-gray-800'}`}>{estado}</span>
-                    <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-700">
-                      Próxima acción: {action?.text || 'En espera'}
-                    </span>
+                    {action && (
+                      <span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-700">
+                        Próxima acción: {action.text}
+                      </span>
+                    )}
                   </div>
                 </div>
 
