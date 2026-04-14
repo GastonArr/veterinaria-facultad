@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import admin from '@/lib/firebaseAdmin';
 import { isValidArgentineDni, sanitizeDni } from '@/lib/utils/dni';
+import { validateArgentinePhone } from '@/lib/utils/phone';
 
 
 export async function signInWithGoogle(idToken) {
@@ -90,6 +91,20 @@ export async function registerWithEmail(userData) {
   }
   if (!isValidArgentineDni(dni)) {
     return { success: false, error: 'El DNI ingresado no tiene un formato argentino válido.' };
+  }
+  const telefonoPrincipalValidation = validateArgentinePhone(telefonoPrincipal);
+  if (!telefonoPrincipalValidation.isValid) {
+    return { success: false, error: `Teléfono principal: ${telefonoPrincipalValidation.error}` };
+  }
+  if (telefonoSecundario && telefonoSecundario.trim()) {
+    const telefonoSecundarioValidation = validateArgentinePhone(telefonoSecundario);
+    if (!telefonoSecundarioValidation.isValid) {
+      return { success: false, error: `Teléfono secundario: ${telefonoSecundarioValidation.error}` };
+    }
+  }
+  const telefonoEmergenciaValidation = validateArgentinePhone(telefonoContactoEmergencia);
+  if (!telefonoEmergenciaValidation.isValid) {
+    return { success: false, error: `Teléfono de emergencia: ${telefonoEmergenciaValidation.error}` };
   }
 
   const auth = admin.auth();
@@ -186,17 +201,24 @@ const validacionDatosCompletarPerfil = (data) => {
   if (!altura || !altura.toString().trim()) errors.altura = 'La altura es obligatoria.';
 
   if (!telefonoPrincipal || !telefonoPrincipal.trim()) errors.telefonoPrincipal = 'El teléfono principal es obligatorio.';
-  else if (!/^\d{10,15}$/.test(telefonoPrincipal)) errors.telefonoPrincipal = 'El teléfono debe tener entre 10 y 15 números.';
+  else {
+    const telefonoPrincipalValidation = validateArgentinePhone(telefonoPrincipal);
+    if (!telefonoPrincipalValidation.isValid) errors.telefonoPrincipal = telefonoPrincipalValidation.error;
+  }
 
-  if (telefonoSecundario && telefonoSecundario.trim() && !/^\d{10,15}$/.test(telefonoSecundario)) {
-      errors.telefonoSecundario = 'Si se ingresa, el teléfono debe tener entre 10 y 15 números.';
+  if (telefonoSecundario && telefonoSecundario.trim()) {
+      const telefonoSecundarioValidation = validateArgentinePhone(telefonoSecundario);
+      if (!telefonoSecundarioValidation.isValid) errors.telefonoSecundario = telefonoSecundarioValidation.error;
   }
 
   if (!nombreContactoEmergencia || !nombreContactoEmergencia.trim()) errors.nombreContactoEmergencia = 'El nombre del contacto de emergencia es obligatorio.';
   else if (!/^[a-zA-Z\s]+$/.test(nombreContactoEmergencia)) errors.nombreContactoEmergencia = 'El nombre del contacto de emergencia solo puede contener letras.';
 
   if (!telefonoContactoEmergencia || !telefonoContactoEmergencia.trim()) errors.telefonoContactoEmergencia = 'El teléfono de emergencia es obligatorio.';
-  else if (!/^\d{10,15}$/.test(telefonoContactoEmergencia)) errors.telefonoContactoEmergencia = 'El teléfono de emergencia debe tener entre 10 y 15 números.';
+  else {
+    const telefonoEmergenciaValidation = validateArgentinePhone(telefonoContactoEmergencia);
+    if (!telefonoEmergenciaValidation.isValid) errors.telefonoContactoEmergencia = telefonoEmergenciaValidation.error;
+  }
 
   return errors;
 };
@@ -327,6 +349,20 @@ export async function actualizarPerfil(userId, userData) {
 
   if (!userId || !nombre || !apellido || !telefonoPrincipal || !direccion || !nombreContactoEmergencia || !telefonoContactoEmergencia) {
     return { success: false, error: 'Faltan datos esenciales para actualizar.' };
+  }
+  const telefonoPrincipalValidation = validateArgentinePhone(telefonoPrincipal);
+  if (!telefonoPrincipalValidation.isValid) {
+    return { success: false, error: `Teléfono principal: ${telefonoPrincipalValidation.error}` };
+  }
+  if (telefonoSecundario && telefonoSecundario.trim()) {
+    const telefonoSecundarioValidation = validateArgentinePhone(telefonoSecundario);
+    if (!telefonoSecundarioValidation.isValid) {
+      return { success: false, error: `Teléfono secundario: ${telefonoSecundarioValidation.error}` };
+    }
+  }
+  const telefonoEmergenciaValidation = validateArgentinePhone(telefonoContactoEmergencia);
+  if (!telefonoEmergenciaValidation.isValid) {
+    return { success: false, error: `Teléfono de emergencia: ${telefonoEmergenciaValidation.error}` };
   }
 
   try {

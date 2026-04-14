@@ -10,8 +10,34 @@ import PasswordStrengthMeter from '@/app/components/PasswordStrengthMeter';
 import { BARRIOS_SANTA_ROSA, CIUDAD_FIJA, PROVINCIA_FIJA, construirDireccion } from '@/lib/utils/direccion';
 import { getPasswordValidation } from '@/lib/utils/passwordValidation';
 import { formatDni, isValidArgentineDni, sanitizeDni } from '@/lib/utils/dni';
+import { buildArgentinePhone, splitArgentinePhone, validateArgentinePhone } from '@/lib/utils/phone';
 
 const BARRIO_OTRO_VALUE = '__OTRO_BARRIO__';
+
+const PhonePairInput = ({ fieldName, value, onPartChange, required = false }) => {
+    const { areaCode, number } = splitArgentinePhone(value);
+
+    return (
+        <div className="grid grid-cols-2 gap-3">
+            <input
+                placeholder="Área (sin 0)"
+                value={areaCode}
+                onChange={(e) => onPartChange(fieldName, 'areaCode', e.target.value)}
+                required={required}
+                maxLength={4}
+                className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"
+            />
+            <input
+                placeholder="Número (sin 15)"
+                value={number}
+                onChange={(e) => onPartChange(fieldName, 'number', e.target.value)}
+                required={required}
+                maxLength={8}
+                className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"
+            />
+        </div>
+    );
+};
 
 export default function LoginPage() {
     const { user, loginWithGoogle, loginWithEmail, signInWithToken } = useAuth();
@@ -71,6 +97,10 @@ export default function LoginPage() {
                 return setError('Ingresá un DNI argentino válido (7 u 8 dígitos, con o sin puntos).');
             }
             if (!formData.barrio || !formData.calle || !formData.altura) return setError('Debes completar barrio, calle y altura.');
+            const telefonoPrincipalValidation = validateArgentinePhone(formData.telefonoPrincipal);
+            if (!telefonoPrincipalValidation.isValid) return setError(`Teléfono principal: ${telefonoPrincipalValidation.error}`);
+            const telefonoEmergenciaValidation = validateArgentinePhone(formData.telefonoContactoEmergencia);
+            if (!telefonoEmergenciaValidation.isValid) return setError(`Teléfono de emergencia: ${telefonoEmergenciaValidation.error}`);
             
             try {
                 const direccion = construirDireccion(formData);
@@ -103,8 +133,18 @@ export default function LoginPage() {
             setFormData(prev => ({ ...prev, dni: formattedDni }));
             return;
         }
-        if ((name.includes('telefono') || name === 'altura') && value && !/^[0-9]+$/.test(value)) return;
+        if (name === 'altura' && value && !/^[0-9]+$/.test(value)) return;
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handlePhonePartChange = (fieldName, partName, partValue) => {
+        if (partValue && !/^\d*$/.test(partValue)) return;
+        const currentParts = splitArgentinePhone(formData[fieldName]);
+        const updatedPhone = buildArgentinePhone(
+            partName === 'areaCode' ? partValue : currentParts.areaCode,
+            partName === 'number' ? partValue : currentParts.number,
+        );
+        setFormData((prev) => ({ ...prev, [fieldName]: updatedPhone }));
     };
 
     const handleBarrioChange = (e) => {
@@ -196,11 +236,11 @@ export default function LoginPage() {
                                     <input name="calle" placeholder="Calle" value={formData.calle} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg"/>
                                     <input name="altura" placeholder="Altura" value={formData.altura} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg"/>
                                 </div>
-                                <input name="telefonoPrincipal" placeholder="Teléfono" value={formData.telefonoPrincipal} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"/>
+                                <PhonePairInput fieldName="telefonoPrincipal" value={formData.telefonoPrincipal} onPartChange={handlePhonePartChange} required />
                                 
                                 <h2 className="text-center text-base font-semibold text-gray-700">Contacto de Emergencia</h2>
                                 <input name="nombreContactoEmergencia" placeholder="Nombre" value={formData.nombreContactoEmergencia} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"/>
-                                <input name="telefonoContactoEmergencia" placeholder="Teléfono" value={formData.telefonoContactoEmergencia} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"/>
+                                <PhonePairInput fieldName="telefonoContactoEmergencia" value={formData.telefonoContactoEmergencia} onPartChange={handlePhonePartChange} required />
                             </>
                         )}
 
