@@ -23,6 +23,16 @@ import { obtenerConfiguracionServicios, getDiasNoLaborales } from '@/lib/actions
 // Main component that renders the current step
 const WizardStepRenderer = () => {
     const { step, prevStep } = useTurnoWizard();
+    const router = useRouter();
+
+    const handleBack = () => {
+        if (step === 1) {
+            router.push('/turnos');
+            return;
+        }
+
+        prevStep();
+    };
 
     const renderStep = () => {
         switch (step) {
@@ -45,7 +55,7 @@ const WizardStepRenderer = () => {
         <section className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl border mt-10 mb-20">
             <Toaster position="top-center" />
             <div className="p-4 sm:p-6 border-b">
-                <button onClick={prevStep} disabled={step === 1} className="flex items-center gap-2 text-sm font-semibold text-gray-600 disabled:opacity-50">
+                <button onClick={handleBack} className="flex items-center gap-2 text-sm font-semibold text-gray-600">
                     <FaArrowLeft /> Volver
                 </button>
             </div>
