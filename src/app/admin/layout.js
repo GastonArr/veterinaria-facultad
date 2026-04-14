@@ -1,6 +1,6 @@
 'use client'
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import BackLink from '@/app/components/BackLink';
 
@@ -19,6 +19,7 @@ const roleHomeRoute = {
 export default function AdminLayout({ children }) {
     const { user, loading } = useAuth();
     const router = useRouter();
+    const pathname = usePathname();
 
     useEffect(() => {
         if (!loading) {
@@ -41,7 +42,9 @@ export default function AdminLayout({ children }) {
       <main className="mx-auto w-full max-w-7xl p-4 sm:p-6 lg:p-8 overflow-y-auto">
         <header className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h1 className="text-xl sm:text-2xl font-bold text-gray-800">{roleDisplayName[user?.role] || 'Administrador/a'}</h1>
-            <BackLink href={roleHomeRoute[user?.role] || '/'} />
+            {pathname !== (roleHomeRoute[user?.role] || '/') ? (
+                <BackLink href={roleHomeRoute[user?.role] || '/'} />
+            ) : null}
         </header>
         {children}
       </main>
