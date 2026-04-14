@@ -14,13 +14,11 @@ import { buildArgentinePhone, splitArgentinePhone, validateArgentinePhone } from
 
 const BARRIO_OTRO_VALUE = '__OTRO_BARRIO__';
 
-const PhonePairInput = ({ fieldName, value, onPartChange, required = false, helperText = null }) => {
+const PhonePairInput = ({ fieldName, value, onPartChange, required = false }) => {
     const { areaCode, number } = splitArgentinePhone(value);
 
     return (
-        <div className="space-y-2">
-            {helperText && <p className="text-xs text-gray-500">{helperText}</p>}
-            <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3">
             <input
                 placeholder="Área (sin 0)"
                 value={areaCode}
@@ -28,8 +26,6 @@ const PhonePairInput = ({ fieldName, value, onPartChange, required = false, help
                 required={required}
                 maxLength={4}
                 className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"
-                type="tel"
-                inputMode="numeric"
             />
             <input
                 placeholder="Número (sin 15)"
@@ -38,10 +34,7 @@ const PhonePairInput = ({ fieldName, value, onPartChange, required = false, help
                 required={required}
                 maxLength={8}
                 className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"
-                type="tel"
-                inputMode="numeric"
             />
-            </div>
         </div>
     );
 };
@@ -145,11 +138,11 @@ export default function LoginPage() {
     };
 
     const handlePhonePartChange = (fieldName, partName, partValue) => {
-        const sanitizedPart = partValue.replace(/\D/g, '');
+        if (partValue && !/^\d*$/.test(partValue)) return;
         const currentParts = splitArgentinePhone(formData[fieldName]);
         const updatedPhone = buildArgentinePhone(
-            partName === 'areaCode' ? sanitizedPart.slice(0, 4) : currentParts.areaCode,
-            partName === 'number' ? sanitizedPart.slice(0, 8) : currentParts.number,
+            partName === 'areaCode' ? partValue : currentParts.areaCode,
+            partName === 'number' ? partValue : currentParts.number,
         );
         setFormData((prev) => ({ ...prev, [fieldName]: updatedPhone }));
     };
@@ -243,13 +236,7 @@ export default function LoginPage() {
                                     <input name="calle" placeholder="Calle" value={formData.calle} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg"/>
                                     <input name="altura" placeholder="Altura" value={formData.altura} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg"/>
                                 </div>
-                                <PhonePairInput
-                                    fieldName="telefonoPrincipal"
-                                    value={formData.telefonoPrincipal}
-                                    onPartChange={handlePhonePartChange}
-                                    helperText="Ingresá tu teléfono: código de área sin 0 y número sin 15 (ej.: 2942 559056 o 299 4641790)."
-                                    required
-                                />
+                                <PhonePairInput fieldName="telefonoPrincipal" value={formData.telefonoPrincipal} onPartChange={handlePhonePartChange} required />
                                 
                                 <h2 className="text-center text-base font-semibold text-gray-700">Contacto de Emergencia</h2>
                                 <input name="nombreContactoEmergencia" placeholder="Nombre" value={formData.nombreContactoEmergencia} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"/>
