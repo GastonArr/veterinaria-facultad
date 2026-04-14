@@ -10,15 +10,15 @@ import PasswordStrengthMeter from '@/app/components/PasswordStrengthMeter';
 import { BARRIOS_SANTA_ROSA, CIUDAD_FIJA, PROVINCIA_FIJA, construirDireccion } from '@/lib/utils/direccion';
 import { getPasswordValidation } from '@/lib/utils/passwordValidation';
 import { formatDni, isValidArgentineDni, sanitizeDni } from '@/lib/utils/dni';
-import { buildArgentinePhone, splitArgentinePhone, validateArgentinePhone } from '@/lib/utils/phone';
+import { buildArgentinePhone, validateArgentinePhone } from '@/lib/utils/phone';
 
 const BARRIO_OTRO_VALUE = '__OTRO_BARRIO__';
 
-const PhonePairInput = ({ fieldName, value, onPartChange, required = false }) => {
-    const { areaCode, number } = splitArgentinePhone(value);
-
+const PhonePairInput = ({ fieldName, areaCode, number, onPartChange, required = false, helperText = null }) => {
     return (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+            {helperText && <p className="text-xs text-gray-500">{helperText}</p>}
+            <div className="grid grid-cols-2 gap-3">
             <input
                 placeholder="Área (sin 0)"
                 value={areaCode}
@@ -26,6 +26,8 @@ const PhonePairInput = ({ fieldName, value, onPartChange, required = false }) =>
                 required={required}
                 maxLength={4}
                 className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"
+                type="tel"
+                inputMode="numeric"
             />
             <input
                 placeholder="Número (sin 15)"
@@ -34,7 +36,10 @@ const PhonePairInput = ({ fieldName, value, onPartChange, required = false }) =>
                 required={required}
                 maxLength={8}
                 className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"
+                type="tel"
+                inputMode="numeric"
             />
+            </div>
         </div>
     );
 };
@@ -59,6 +64,10 @@ export default function LoginPage() {
         altura: '',
         direccion: '',
         nombreContactoEmergencia: '', telefonoContactoEmergencia: ''
+    });
+    const [phoneParts, setPhoneParts] = useState({
+        telefonoPrincipal: { areaCode: '', number: '' },
+        telefonoContactoEmergencia: { areaCode: '', number: '' },
     });
     const [barrioSeleccionado, setBarrioSeleccionado] = useState('');
     const mostrarCampoBarrioManual = barrioSeleccionado === BARRIO_OTRO_VALUE;
@@ -138,13 +147,23 @@ export default function LoginPage() {
     };
 
     const handlePhonePartChange = (fieldName, partName, partValue) => {
-        if (partValue && !/^\d*$/.test(partValue)) return;
-        const currentParts = splitArgentinePhone(formData[fieldName]);
-        const updatedPhone = buildArgentinePhone(
-            partName === 'areaCode' ? partValue : currentParts.areaCode,
-            partName === 'number' ? partValue : currentParts.number,
-        );
-        setFormData((prev) => ({ ...prev, [fieldName]: updatedPhone }));
+        const sanitizedPart = partValue.replace(/\D/g, '');
+        setPhoneParts((prev) => {
+            const nextFieldParts = {
+                ...prev[fieldName],
+                [partName]: (partName === 'areaCode' ? sanitizedPart.slice(0, 4) : sanitizedPart.slice(0, 8)),
+            };
+
+            setFormData((prevFormData) => ({
+                ...prevFormData,
+                [fieldName]: buildArgentinePhone(nextFieldParts.areaCode, nextFieldParts.number),
+            }));
+
+            return {
+                ...prev,
+                [fieldName]: nextFieldParts,
+            };
+        });
     };
 
     const handleBarrioChange = (e) => {
@@ -236,11 +255,18 @@ export default function LoginPage() {
                                     <input name="calle" placeholder="Calle" value={formData.calle} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg"/>
                                     <input name="altura" placeholder="Altura" value={formData.altura} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg"/>
                                 </div>
-                                <PhonePairInput fieldName="telefonoPrincipal" value={formData.telefonoPrincipal} onPartChange={handlePhonePartChange} required />
+                                <PhonePairInput
+                                    fieldName="telefonoPrincipal"
+                                    areaCode={phoneParts.telefonoPrincipal.areaCode}
+                                    number={phoneParts.telefonoPrincipal.number}
+                                    onPartChange={handlePhonePartChange}
+                                    helperText="Ingresá tu teléfono: código de área sin 0 y número sin 15 (ej.: 2942 559056 o 299 4641790)."
+                                    required
+                                />
                                 
                                 <h2 className="text-center text-base font-semibold text-gray-700">Contacto de Emergencia</h2>
                                 <input name="nombreContactoEmergencia" placeholder="Nombre" value={formData.nombreContactoEmergencia} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"/>
-                                <PhonePairInput fieldName="telefonoContactoEmergencia" value={formData.telefonoContactoEmergencia} onPartChange={handlePhonePartChange} required />
+                                <PhonePairInput fieldName="telefonoContactoEmergencia" areaCode={phoneParts.telefonoContactoEmergencia.areaCode} number={phoneParts.telefonoContactoEmergencia.number} onPartChange={handlePhonePartChange} required />
                             </>
                         )}
 

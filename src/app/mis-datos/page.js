@@ -40,9 +40,7 @@ const InfoField = ({ label, value, icon, name, isEditing, onChange, isEditable =
     );
 };
 
-const PhoneEditableField = ({ label, name, value, isEditing, onPartChange }) => {
-    const { areaCode, number } = splitArgentinePhone(value || '');
-
+const PhoneEditableField = ({ label, name, value, areaCode, number, isEditing, onPartChange }) => {
     return (
         <div className="flex items-center mb-4 bg-gray-50 p-3 rounded-lg">
             <FaPhone className={`mr-4 ${isEditing ? 'text-blue-500' : 'text-gray-400'}`} size={20} />
@@ -105,6 +103,12 @@ const buildEditableFormData = (data = {}) => ({
     telefonoContactoEmergencia: data.telefonoContactoEmergencia || '',
 });
 
+const buildPhoneParts = (data = {}) => ({
+    telefonoPrincipal: splitArgentinePhone(data.telefonoPrincipal || ''),
+    telefonoSecundario: splitArgentinePhone(data.telefonoSecundario || ''),
+    telefonoContactoEmergencia: splitArgentinePhone(data.telefonoContactoEmergencia || ''),
+});
+
 export default function MisDatosPage() {
     const { user, resetPassword } = useAuth();
     const [userData, setUserData] = useState(null);
@@ -112,6 +116,7 @@ export default function MisDatosPage() {
     const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [formData, setFormData] = useState(buildEditableFormData());
+    const [phoneParts, setPhoneParts] = useState(buildPhoneParts());
     const [notification, setNotification] = useState({ message: '', type: '' });
     const [isPasswordProvider, setIsPasswordProvider] = useState(false);
     const [showPasswordResetConfirmModal, setShowPasswordResetConfirmModal] = useState(false);
@@ -135,7 +140,9 @@ export default function MisDatosPage() {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     setUserData(data);
-                    setFormData(buildEditableFormData(data));
+                    const editableData = buildEditableFormData(data);
+                    setFormData(editableData);
+                    setPhoneParts(buildPhoneParts(editableData));
 
                     if (data.barrio) {
                         const esBarrioConocido = BARRIOS_SANTA_ROSA.includes(data.barrio);
@@ -161,13 +168,23 @@ export default function MisDatosPage() {
     };
 
     const handlePhonePartChange = (fieldName, partName, partValue) => {
-        if (partValue && !/^\d*$/.test(partValue)) return;
-        const currentParts = splitArgentinePhone(formData[fieldName]);
-        const updatedPhone = buildArgentinePhone(
-            partName === 'areaCode' ? partValue : currentParts.areaCode,
-            partName === 'number' ? partValue : currentParts.number,
-        );
-        setFormData((prev) => ({ ...prev, [fieldName]: updatedPhone }));
+        const sanitizedPart = partValue.replace(/\D/g, '');
+        setPhoneParts((prev) => {
+            const nextFieldParts = {
+                ...prev[fieldName],
+                [partName]: partName === 'areaCode' ? sanitizedPart.slice(0, 4) : sanitizedPart.slice(0, 8),
+            };
+
+            setFormData((prevFormData) => ({
+                ...prevFormData,
+                [fieldName]: buildArgentinePhone(nextFieldParts.areaCode, nextFieldParts.number),
+            }));
+
+            return {
+                ...prev,
+                [fieldName]: nextFieldParts,
+            };
+        });
     };
 
     const handleBarrioChange = (e) => {
@@ -184,7 +201,9 @@ export default function MisDatosPage() {
 
     const handleCancelEdit = () => {
         setIsEditing(false);
-        setFormData(buildEditableFormData(userData));
+        const editableData = buildEditableFormData(userData);
+        setFormData(editableData);
+        setPhoneParts(buildPhoneParts(editableData));
 
         if (userData?.barrio) {
             const esBarrioConocido = BARRIOS_SANTA_ROSA.includes(userData.barrio);
@@ -243,8 +262,10 @@ export default function MisDatosPage() {
             }
 
             const updatedViewData = { ...userData, ...payload };
+            const editableData = buildEditableFormData(updatedViewData);
             setUserData(updatedViewData);
-            setFormData(buildEditableFormData(updatedViewData));
+            setFormData(editableData);
+            setPhoneParts(buildPhoneParts(editableData));
             setIsEditing(false);
             setNotification({ message: result.message || '¡Datos actualizados con éxito!', type: 'success' });
         } catch (error) {
@@ -359,8 +380,8 @@ export default function MisDatosPage() {
                     <div className="bg-white shadow-xl rounded-2xl p-6">
                         <h2 className="text-2xl font-bold text-gray-800 mb-6">Información de Contacto</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
-                            <PhoneEditableField label="Teléfono Principal" value={formData.telefonoPrincipal} name="telefonoPrincipal" isEditing={isEditing} onPartChange={handlePhonePartChange} />
-                            <PhoneEditableField label="Teléfono Secundario" value={formData.telefonoSecundario} name="telefonoSecundario" isEditing={isEditing} onPartChange={handlePhonePartChange} />
+                            <PhoneEditableField label="Teléfono Principal" value={formData.telefonoPrincipal} areaCode={phoneParts.telefonoPrincipal.areaCode} number={phoneParts.telefonoPrincipal.number} name="telefonoPrincipal" isEditing={isEditing} onPartChange={handlePhonePartChange} />
+                            <PhoneEditableField label="Teléfono Secundario" value={formData.telefonoSecundario} areaCode={phoneParts.telefonoSecundario.areaCode} number={phoneParts.telefonoSecundario.number} name="telefonoSecundario" isEditing={isEditing} onPartChange={handlePhonePartChange} />
                         </div>
                     </div>
 
@@ -368,7 +389,7 @@ export default function MisDatosPage() {
                         <h2 className="text-2xl font-bold text-gray-800 mb-6">Contacto de Emergencia</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
                             <InfoField label="Nombre de Contacto" value={formData.nombreContactoEmergencia} icon={FaExclamationTriangle} name="nombreContactoEmergencia" isEditing={isEditing} onChange={handleInputChange} />
-                            <PhoneEditableField label="Teléfono de Emergencia" value={formData.telefonoContactoEmergencia} name="telefonoContactoEmergencia" isEditing={isEditing} onPartChange={handlePhonePartChange} />
+                            <PhoneEditableField label="Teléfono de Emergencia" value={formData.telefonoContactoEmergencia} areaCode={phoneParts.telefonoContactoEmergencia.areaCode} number={phoneParts.telefonoContactoEmergencia.number} name="telefonoContactoEmergencia" isEditing={isEditing} onPartChange={handlePhonePartChange} />
                         </div>
                     </div>
                 </form>
