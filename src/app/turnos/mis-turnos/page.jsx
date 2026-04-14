@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
-import { FaDog, FaCat, FaPlus, FaCalendarCheck, FaHistory, FaExclamationTriangle, FaArrowRight } from 'react-icons/fa';
+import { FaDog, FaCat, FaPlus, FaCalendarCheck, FaHistory, FaExclamationTriangle, FaArrowRight, FaArrowLeft } from 'react-icons/fa';
 
 // --- Firebase Imports ---
 import { db } from '@/lib/firebase';
@@ -304,6 +304,15 @@ export default function MisTurnosPage() {
 
     return (
         <main className="max-w-4xl mx-auto p-4 md:p-8">
+            <div className="mb-5">
+                <Link
+                    href="/"
+                    className="inline-flex items-center text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors"
+                >
+                    <FaArrowLeft className="mr-2" />
+                    Volver
+                </Link>
+            </div>
             <div className="flex justify-between items-center mb-8">
                 <h1 className="text-3xl font-bold text-gray-800">Mis Turnos</h1>
                 {user && <Link href="/turnos/nuevo" className="flex items-center bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition shadow-md">
