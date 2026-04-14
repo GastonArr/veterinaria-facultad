@@ -62,14 +62,6 @@ const TransporteClientView = ({ initialTurnos }) => {
         }
         setLoadingTurnoId(null);
     };
-
-    const getTripType = (estado) => {
-        const recogidaStates = ['confirmado', 'traslado confirmado', 'buscando', 'buscado'];
-        const entregaStates = ['peluqueria finalizada', 'devolucion confirmada', 'devolviendo'];
-        if (recogidaStates.includes(estado)) return { text: 'Recogida', className: 'bg-blue-100 text-blue-800' };
-        if (entregaStates.includes(estado)) return { text: 'Entrega', className: 'bg-green-100 text-green-800' };
-        return { text: 'En Local', className: 'bg-gray-100 text-gray-800' };
-    };
     
     const statusColors = {
         confirmado: 'bg-blue-100 text-blue-800',
@@ -99,24 +91,17 @@ const TransporteClientView = ({ initialTurnos }) => {
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Horario</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mascota</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dirección</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo de Viaje</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado Actual</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Próxima Acción</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200">
                             {turnos.map((turno) => {
-                                const tripType = getTripType(turno.estado);
                                 return (
                                     <tr key={turno.id} className="hover:bg-gray-50">
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{new Date(turno.fecha).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}hs</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{turno.mascota.nombre}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{turno.user.direccion}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${tripType.className}`}>
-                                                {tripType.text}
-                                            </span>
-                                        </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColors[turno.estado] || 'bg-gray-100 text-gray-800'}`}>
                                                 {turno.estado}
@@ -137,7 +122,6 @@ const TransporteClientView = ({ initialTurnos }) => {
                 </div>
                 <div className="grid gap-3 md:hidden">
                     {turnos.map((turno) => {
-                        const tripType = getTripType(turno.estado);
                         return (
                             <article key={turno.id} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
                                 <div className="flex items-center justify-between">
@@ -146,7 +130,6 @@ const TransporteClientView = ({ initialTurnos }) => {
                                 </div>
                                 <p className="mt-1 text-sm text-gray-600">{turno.user.direccion}</p>
                                 <div className="mt-3 flex flex-wrap gap-2">
-                                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${tripType.className}`}>{tripType.text}</span>
                                     <span className={`px-2 py-1 text-xs font-semibold rounded-full ${statusColors[turno.estado] || 'bg-gray-100 text-gray-800'}`}>{turno.estado}</span>
                                 </div>
                                 <div className="mt-3">

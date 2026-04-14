@@ -12,8 +12,8 @@ const roleDisplayName = {
 };
 const roleHomeRoute = {
     admin: '/admin',
-    peluqueria: '/',
-    transporte: '/',
+    peluqueria: '/admin/empleados/peluqueria',
+    transporte: '/admin/empleados/transporte',
 };
 
 export default function AdminLayout({ children }) {

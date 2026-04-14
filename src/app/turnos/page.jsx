@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { collection, query, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import SubHeader from '@/app/components/SubHeader';
+import BackLink from '@/app/components/BackLink';
 import { FaPlus, FaCalendarCheck } from 'react-icons/fa';
 
 const TurnoCard = ({ turno }) => {
@@ -79,6 +80,7 @@ export default function MisTurnosPage() {
         <>
             <SubHeader title="Mis Turnos" />
             <main className="max-w-7xl mx-auto p-4 md:p-8">
+                <BackLink href="/" className="mb-4 inline-block" />
                 <div className="flex justify-end mb-6">
                      <Link href="/turnos/nuevo" className="flex items-center bg-indigo-500 text-white py-2 px-5 rounded-lg hover:bg-indigo-600 transition shadow-lg">
                         <FaPlus className="mr-2" />

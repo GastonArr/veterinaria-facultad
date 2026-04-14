@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { collection, query, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import SubHeader from '@/app/components/SubHeader';
+import BackLink from '@/app/components/BackLink';
 import { FaPlus, FaCat, FaDog } from 'react-icons/fa';
 
 
@@ -96,6 +97,7 @@ export default function MisMascotasPage() {
         <>
             <SubHeader title="Mis Mascotas" />
             <main className="max-w-7xl mx-auto p-4 md:p-8">
+                <BackLink href="/" className="mb-4 inline-block" />
                 <div className="flex justify-end mb-6">
                      <Link href="/mascotas/nueva" className="flex items-center bg-green-500 text-white py-2 px-5 rounded-lg hover:bg-green-600 transition shadow-lg">
                         <FaPlus className="mr-2" />
