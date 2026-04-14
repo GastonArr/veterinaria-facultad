@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import admin from '@/lib/firebaseAdmin';
+import { isValidArgentineDni, sanitizeDni } from '@/lib/utils/dni';
 
 
 export async function signInWithGoogle(idToken) {
@@ -82,9 +83,13 @@ export async function signInWithGoogle(idToken) {
 
 export async function registerWithEmail(userData) {
   const { email, password, nombre, apellido, dni, telefonoPrincipal, telefonoSecundario, direccion, provincia, ciudad, barrio, calle, altura, nombreContactoEmergencia, telefonoContactoEmergencia } = userData;
+  const dniNormalizado = sanitizeDni(dni);
 
-  if (!email || !password || !nombre || !apellido || !dni) {
+  if (!email || !password || !nombre || !apellido || !dniNormalizado) {
     return { success: false, error: 'Faltan datos esenciales para el registro.' };
+  }
+  if (!isValidArgentineDni(dni)) {
+    return { success: false, error: 'El DNI ingresado no tiene un formato argentino válido.' };
   }
 
   const auth = admin.auth();
@@ -106,7 +111,7 @@ export async function registerWithEmail(userData) {
     await firestore.collection('users').doc(userId).set({
       nombre,
       apellido,
-      dni,
+      dni: dniNormalizado,
       email,
       telefonoPrincipal,
       telefonoSecundario: telefonoSecundario || '',
@@ -173,7 +178,7 @@ const validacionDatosCompletarPerfil = (data) => {
   else if (!/^[a-zA-Z\s]+$/.test(apellido)) errors.apellido = 'El apellido solo puede contener letras.';
 
   if (!dni || !dni.trim()) errors.dni = 'El DNI es obligatorio.';
-  else if (!/^\d{7,8}$/.test(dni)) errors.dni = 'El DNI debe tener entre 7 y 8 números.';
+  else if (!isValidArgentineDni(dni)) errors.dni = 'El DNI debe tener un formato argentino válido.';
 
   if (!direccion || !direccion.trim()) errors.direccion = 'La dirección es obligatoria.';
   if (!barrio || !barrio.trim()) errors.barrio = 'El barrio es obligatorio.';
@@ -225,6 +230,8 @@ export async function completarPerfil(userId, userData) {
     telefonoContactoEmergencia 
   } = userData;
   
+  const dniNormalizado = sanitizeDni(dni);
+
   if (!userId) {
     return { success: false, error: 'Error de autenticación: Falta el ID de usuario.' };
   }
@@ -241,7 +248,7 @@ export async function completarPerfil(userId, userData) {
     await firestore.collection('users').doc(userId).set({
       nombre,
       apellido,
-      dni,
+      dni: dniNormalizado,
       telefonoPrincipal,
       telefonoSecundario: telefonoSecundario || '',
       direccion,
