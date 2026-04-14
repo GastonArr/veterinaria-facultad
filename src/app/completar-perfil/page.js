@@ -10,6 +10,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { FaUser, FaIdCard, FaPhone, FaMapMarkerAlt, FaExclamationTriangle } from 'react-icons/fa';
 import { BARRIOS_SANTA_ROSA, CIUDAD_FIJA, PROVINCIA_FIJA, construirDireccion } from '@/lib/utils/direccion';
+import { formatDni, isValidArgentineDni, sanitizeDni } from '@/lib/utils/dni';
 
 const BARRIO_OTRO_VALUE = '__OTRO_BARRIO__';
 
@@ -58,7 +59,7 @@ export default function CompletarPerfilPage() {
     else if (!/^[a-zA-Z\s]+$/.test(data.apellido)) errors.apellido = 'El apellido solo puede contener letras.';
 
     if (!data.dni.trim()) errors.dni = 'El DNI es obligatorio.';
-    else if (!/^\d{7,8}$/.test(data.dni)) errors.dni = 'El DNI debe tener entre 7 y 8 números.';
+    else if (!isValidArgentineDni(data.dni)) errors.dni = 'Formato inválido. Usá 12.345.678 o solo números (7 u 8 dígitos).';
 
     if (!data.barrio.trim()) errors.barrio = 'El barrio es obligatorio.';
     if (!data.calle.trim()) errors.calle = 'La calle es obligatoria.';
@@ -101,7 +102,15 @@ export default function CompletarPerfilPage() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if ((name === 'dni' || name.includes('telefono') || name === 'altura') && value && !/^[0-9]*$/.test(value)) return;
+    if (name === 'dni') {
+      const formattedDni = formatDni(value);
+      setFormData(prev => ({ ...prev, dni: formattedDni }));
+      if (errors.dni) {
+        setErrors(prevErrors => ({ ...prevErrors, dni: null }));
+      }
+      return;
+    }
+    if ((name.includes('telefono') || name === 'altura') && value && !/^[0-9]*$/.test(value)) return;
     
     setFormData(prev => ({ ...prev, [name]: value }));
     
@@ -141,6 +150,7 @@ export default function CompletarPerfilPage() {
     startTransition(async () => {
       const result = await completarPerfil(user.uid, {
         ...formData,
+        dni: sanitizeDni(formData.dni),
         email: user.email || '',
         direccion: construirDireccion(formData),
       });
@@ -177,7 +187,7 @@ export default function CompletarPerfilPage() {
                         <FormInput id="nombre" name="nombre" type="text" label="Nombre" icon={FaUser} value={formData.nombre} onChange={handleChange} required error={errors.nombre} />
                         <FormInput id="apellido" name="apellido" type="text" label="Apellido" icon={FaUser} value={formData.apellido} onChange={handleChange} required error={errors.apellido} />
                     </div>
-                    <FormInput id="dni" name="dni" type="tel" label="DNI" icon={FaIdCard} placeholder="Sin puntos" value={formData.dni} onChange={handleChange} required maxLength="8" error={errors.dni} />
+                    <FormInput id="dni" name="dni" type="tel" label="DNI" icon={FaIdCard} placeholder="12.345.678" value={formData.dni} onChange={handleChange} required maxLength="10" error={errors.dni} />
                     <div className="mb-4">
                         <label className="block text-xs font-semibold text-gray-500 mb-1">Provincia y Ciudad</label>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

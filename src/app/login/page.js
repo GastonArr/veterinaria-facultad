@@ -9,6 +9,7 @@ import { registerWithEmail } from '@/lib/actions/user.actions.js';
 import PasswordStrengthMeter from '@/app/components/PasswordStrengthMeter';
 import { BARRIOS_SANTA_ROSA, CIUDAD_FIJA, PROVINCIA_FIJA, construirDireccion } from '@/lib/utils/direccion';
 import { getPasswordValidation } from '@/lib/utils/passwordValidation';
+import { formatDni, isValidArgentineDni, sanitizeDni } from '@/lib/utils/dni';
 
 const BARRIO_OTRO_VALUE = '__OTRO_BARRIO__';
 
@@ -66,11 +67,14 @@ export default function LoginPage() {
             if (!passwordValidation.isValid) {
                 return setError(`La contraseña no cumple con los requisitos: ${passwordValidation.unmetRequirements[0].text}.`);
             }
+            if (!isValidArgentineDni(formData.dni)) {
+                return setError('Ingresá un DNI argentino válido (7 u 8 dígitos, con o sin puntos).');
+            }
             if (!formData.barrio || !formData.calle || !formData.altura) return setError('Debes completar barrio, calle y altura.');
             
             try {
                 const direccion = construirDireccion(formData);
-                const newUserData = { email, password, ...formData, direccion };
+                const newUserData = { email, password, ...formData, dni: sanitizeDni(formData.dni), direccion };
                 const result = await registerWithEmail(newUserData);
 
                 if (result.success && result.token) {
@@ -94,7 +98,12 @@ export default function LoginPage() {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        if ((name === 'dni' || name.includes('telefono') || name === 'altura') && value && !/^[0-9]+$/.test(value)) return;
+        if (name === 'dni') {
+            const formattedDni = formatDni(value);
+            setFormData(prev => ({ ...prev, dni: formattedDni }));
+            return;
+        }
+        if ((name.includes('telefono') || name === 'altura') && value && !/^[0-9]+$/.test(value)) return;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
@@ -161,7 +170,7 @@ export default function LoginPage() {
                                     <input name="nombre" placeholder="Nombre" value={formData.nombre} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"/>
                                     <input name="apellido" placeholder="Apellido" value={formData.apellido} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"/>
                                 </div>
-                                <input name="dni" placeholder="DNI" value={formData.dni} onChange={handleInputChange} required maxLength="8" className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"/>
+                                <input name="dni" placeholder="12.345.678" value={formData.dni} onChange={handleInputChange} required maxLength="10" className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"/>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <input value={formData.provincia} disabled className="w-full p-3 bg-gray-100 border border-gray-200 rounded-lg text-gray-600"/>
                                     <input value={formData.ciudad} disabled className="w-full p-3 bg-gray-100 border border-gray-200 rounded-lg text-gray-600"/>
