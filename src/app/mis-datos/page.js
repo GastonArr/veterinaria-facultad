@@ -9,6 +9,7 @@ import SubHeader from '@/app/components/SubHeader';
 import BackLink from '@/app/components/BackLink';
 import { FaUser, FaIdCard, FaPhone, FaMapMarkerAlt, FaExclamationTriangle, FaSave, FaEdit, FaTimes, FaKey } from 'react-icons/fa';
 import { BARRIOS_SANTA_ROSA, CIUDAD_FIJA, PROVINCIA_FIJA, construirDireccion } from '@/lib/utils/direccion';
+import { buildArgentinePhone, splitArgentinePhone, validateArgentinePhone } from '@/lib/utils/phone';
 
 const BARRIO_OTRO_VALUE = '__OTRO_BARRIO__';
 
@@ -32,6 +33,41 @@ const InfoField = ({ label, value, icon, name, isEditing, onChange, isEditable =
                     />
                 ) : (
                     <p className={`text-lg ${isEditable ? 'text-gray-800' : 'text-gray-500'}`}>{value || (isEditable ? 'No especificado' : 'No modificable')}</p>
+                )}
+            </div>
+        </div>
+    );
+};
+
+const PhoneEditableField = ({ label, name, value, isEditing, onPartChange }) => {
+    const { areaCode, number } = splitArgentinePhone(value || '');
+
+    return (
+        <div className="flex items-center mb-4 bg-gray-50 p-3 rounded-lg">
+            <FaPhone className={`mr-4 ${isEditing ? 'text-blue-500' : 'text-gray-400'}`} size={20} />
+            <div className="flex-grow">
+                <label className="block text-xs font-semibold text-gray-500 mb-1">{label}</label>
+                {isEditing ? (
+                    <div className="grid grid-cols-2 gap-3">
+                        <input
+                            type="tel"
+                            value={areaCode}
+                            onChange={(e) => onPartChange(name, 'areaCode', e.target.value)}
+                            placeholder="Área (sin 0)"
+                            maxLength={4}
+                            className="w-full text-lg text-gray-800 bg-white border-b-2 border-blue-300 focus:outline-none focus:border-blue-500 transition px-1"
+                        />
+                        <input
+                            type="tel"
+                            value={number}
+                            onChange={(e) => onPartChange(name, 'number', e.target.value)}
+                            placeholder="Número (sin 15)"
+                            maxLength={8}
+                            className="w-full text-lg text-gray-800 bg-white border-b-2 border-blue-300 focus:outline-none focus:border-blue-500 transition px-1"
+                        />
+                    </div>
+                ) : (
+                    <p className="text-lg text-gray-800">{value || 'No especificado'}</p>
                 )}
             </div>
         </div>
@@ -116,8 +152,18 @@ export default function MisDatosPage() {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        if ((name === 'dni' || name.includes('telefono') || name === 'altura') && value && !/^[0-9]*$/.test(value)) return;
+        if ((name === 'dni' || name === 'altura') && value && !/^[0-9]*$/.test(value)) return;
         setFormData((prev) => ({ ...prev, [name]: value }));
+    };
+
+    const handlePhonePartChange = (fieldName, partName, partValue) => {
+        if (partValue && !/^\d*$/.test(partValue)) return;
+        const currentParts = splitArgentinePhone(formData[fieldName]);
+        const updatedPhone = buildArgentinePhone(
+            partName === 'areaCode' ? partValue : currentParts.areaCode,
+            partName === 'number' ? partValue : currentParts.number,
+        );
+        setFormData((prev) => ({ ...prev, [fieldName]: updatedPhone }));
     };
 
     const handleBarrioChange = (e) => {
@@ -165,6 +211,24 @@ export default function MisDatosPage() {
             nombreContactoEmergencia: (formData.nombreContactoEmergencia || '').trim(),
             telefonoContactoEmergencia: (formData.telefonoContactoEmergencia || '').trim(),
         };
+
+        const telefonoPrincipalValidation = validateArgentinePhone(payload.telefonoPrincipal);
+        if (!telefonoPrincipalValidation.isValid) {
+            setNotification({ message: `Teléfono principal: ${telefonoPrincipalValidation.error}`, type: 'error' });
+            return;
+        }
+        if (payload.telefonoSecundario) {
+            const telefonoSecundarioValidation = validateArgentinePhone(payload.telefonoSecundario);
+            if (!telefonoSecundarioValidation.isValid) {
+                setNotification({ message: `Teléfono secundario: ${telefonoSecundarioValidation.error}`, type: 'error' });
+                return;
+            }
+        }
+        const telefonoEmergenciaValidation = validateArgentinePhone(payload.telefonoContactoEmergencia);
+        if (!telefonoEmergenciaValidation.isValid) {
+            setNotification({ message: `Teléfono de emergencia: ${telefonoEmergenciaValidation.error}`, type: 'error' });
+            return;
+        }
 
         setIsSaving(true);
         try {
@@ -286,8 +350,8 @@ export default function MisDatosPage() {
                     <div className="bg-white shadow-xl rounded-2xl p-6">
                         <h2 className="text-2xl font-bold text-gray-800 mb-6">Información de Contacto</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
-                            <InfoField label="Teléfono Principal" value={formData.telefonoPrincipal} icon={FaPhone} name="telefonoPrincipal" isEditing={isEditing} onChange={handleInputChange} />
-                            <InfoField label="Teléfono Secundario" value={formData.telefonoSecundario} icon={FaPhone} name="telefonoSecundario" isEditing={isEditing} onChange={handleInputChange} />
+                            <PhoneEditableField label="Teléfono Principal" value={formData.telefonoPrincipal} name="telefonoPrincipal" isEditing={isEditing} onPartChange={handlePhonePartChange} />
+                            <PhoneEditableField label="Teléfono Secundario" value={formData.telefonoSecundario} name="telefonoSecundario" isEditing={isEditing} onPartChange={handlePhonePartChange} />
                         </div>
                     </div>
 
@@ -295,7 +359,7 @@ export default function MisDatosPage() {
                         <h2 className="text-2xl font-bold text-gray-800 mb-6">Contacto de Emergencia</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
                             <InfoField label="Nombre de Contacto" value={formData.nombreContactoEmergencia} icon={FaExclamationTriangle} name="nombreContactoEmergencia" isEditing={isEditing} onChange={handleInputChange} />
-                            <InfoField label="Teléfono de Emergencia" value={formData.telefonoContactoEmergencia} icon={FaPhone} name="telefonoContactoEmergencia" isEditing={isEditing} onChange={handleInputChange} />
+                            <PhoneEditableField label="Teléfono de Emergencia" value={formData.telefonoContactoEmergencia} name="telefonoContactoEmergencia" isEditing={isEditing} onPartChange={handlePhonePartChange} />
                         </div>
                     </div>
                 </form>

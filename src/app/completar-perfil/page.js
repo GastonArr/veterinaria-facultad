@@ -11,6 +11,7 @@ import { db } from '@/lib/firebase';
 import { FaUser, FaIdCard, FaPhone, FaMapMarkerAlt, FaExclamationTriangle } from 'react-icons/fa';
 import { BARRIOS_SANTA_ROSA, CIUDAD_FIJA, PROVINCIA_FIJA, construirDireccion } from '@/lib/utils/direccion';
 import { formatDni, isValidArgentineDni, sanitizeDni } from '@/lib/utils/dni';
+import { buildArgentinePhone, splitArgentinePhone, validateArgentinePhone } from '@/lib/utils/phone';
 
 const BARRIO_OTRO_VALUE = '__OTRO_BARRIO__';
 
@@ -30,6 +31,42 @@ const FormInput = ({ id, name, type, placeholder, value, onChange, required = fa
         {error && <p id={`${id}-error`} className="text-red-600 text-xs mt-1">{error}</p>}
     </div>
 );
+
+const PhoneField = ({ label, fieldName, value, onPartChange, required = false, error }) => {
+  const { areaCode, number } = splitArgentinePhone(value);
+
+  return (
+    <div className="mb-4">
+      <label className="block text-xs font-semibold text-gray-500 mb-1">{label}</label>
+      <div className="grid grid-cols-2 gap-3">
+        <div className={`flex items-center bg-gray-50 p-3 rounded-lg border-2 ${error ? 'border-red-500' : 'border-transparent focus-within:border-blue-500'} transition-colors`}>
+          <FaPhone className="text-gray-400 mr-3" size={18} />
+          <input
+            className="flex-grow text-lg text-gray-800 bg-transparent focus:outline-none"
+            type="tel"
+            placeholder="Área (sin 0)"
+            value={areaCode}
+            onChange={(e) => onPartChange(fieldName, 'areaCode', e.target.value)}
+            maxLength={4}
+            required={required}
+          />
+        </div>
+        <div className={`flex items-center bg-gray-50 p-3 rounded-lg border-2 ${error ? 'border-red-500' : 'border-transparent focus-within:border-blue-500'} transition-colors`}>
+          <input
+            className="flex-grow text-lg text-gray-800 bg-transparent focus:outline-none"
+            type="tel"
+            placeholder="Número (sin 15)"
+            value={number}
+            onChange={(e) => onPartChange(fieldName, 'number', e.target.value)}
+            maxLength={8}
+            required={required}
+          />
+        </div>
+      </div>
+      {error && <p className="text-red-600 text-xs mt-1">{error}</p>}
+    </div>
+  );
+};
 
 export default function CompletarPerfilPage() {
   const { user, loading: authLoading } = useAuth();
@@ -65,16 +102,21 @@ export default function CompletarPerfilPage() {
     if (!data.calle.trim()) errors.calle = 'La calle es obligatoria.';
     if (!data.altura.trim()) errors.altura = 'La altura es obligatoria.';
 
+    const telefonoPrincipalValidation = validateArgentinePhone(data.telefonoPrincipal);
     if (!data.telefonoPrincipal.trim()) errors.telefonoPrincipal = 'El teléfono principal es obligatorio.';
-    else if (!/^\d{10,15}$/.test(data.telefonoPrincipal)) errors.telefonoPrincipal = 'El teléfono debe tener entre 10 y 15 números.';
+    else if (!telefonoPrincipalValidation.isValid) errors.telefonoPrincipal = telefonoPrincipalValidation.error;
     
-    if (data.telefonoSecundario.trim() && !/^\d{10,15}$/.test(data.telefonoSecundario)) errors.telefonoSecundario = 'Si se ingresa, el teléfono debe tener entre 10 y 15 números.';
+    if (data.telefonoSecundario.trim()) {
+      const telefonoSecundarioValidation = validateArgentinePhone(data.telefonoSecundario);
+      if (!telefonoSecundarioValidation.isValid) errors.telefonoSecundario = telefonoSecundarioValidation.error;
+    }
 
     if (!data.nombreContactoEmergencia.trim()) errors.nombreContactoEmergencia = 'El nombre de contacto de emergencia es obligatorio.';
     else if (!/^[a-zA-Z\s]+$/.test(data.nombreContactoEmergencia)) errors.nombreContactoEmergencia = 'El nombre solo puede contener letras.';
 
+    const telefonoEmergenciaValidation = validateArgentinePhone(data.telefonoContactoEmergencia);
     if (!data.telefonoContactoEmergencia.trim()) errors.telefonoContactoEmergencia = 'El teléfono de emergencia es obligatorio.';
-    else if (!/^\d{10,15}$/.test(data.telefonoContactoEmergencia)) errors.telefonoContactoEmergencia = 'El teléfono debe tener entre 10 y 15 números.';
+    else if (!telefonoEmergenciaValidation.isValid) errors.telefonoContactoEmergencia = telefonoEmergenciaValidation.error;
     
     return errors;
   };
@@ -110,12 +152,26 @@ export default function CompletarPerfilPage() {
       }
       return;
     }
-    if ((name.includes('telefono') || name === 'altura') && value && !/^[0-9]*$/.test(value)) return;
+    if (name === 'altura' && value && !/^[0-9]*$/.test(value)) return;
     
     setFormData(prev => ({ ...prev, [name]: value }));
     
     if (errors[name]) {
         setErrors(prevErrors => ({ ...prevErrors, [name]: null }));
+    }
+  };
+
+  const handlePhonePartChange = (fieldName, partName, partValue) => {
+    if (partValue && !/^\d*$/.test(partValue)) return;
+    const currentParts = splitArgentinePhone(formData[fieldName]);
+    const updatedPhone = buildArgentinePhone(
+      partName === 'areaCode' ? partValue : currentParts.areaCode,
+      partName === 'number' ? partValue : currentParts.number,
+    );
+
+    setFormData((prev) => ({ ...prev, [fieldName]: updatedPhone }));
+    if (errors[fieldName]) {
+      setErrors((prevErrors) => ({ ...prevErrors, [fieldName]: null }));
     }
   };
 
@@ -225,8 +281,8 @@ export default function CompletarPerfilPage() {
                 <div className="bg-white shadow-xl rounded-2xl p-6 mb-8">
                     <h2 className="text-2xl font-bold text-gray-800 mb-6">Información de Contacto</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
-                        <FormInput id="telefonoPrincipal" name="telefonoPrincipal" type="tel" label="Teléfono Principal" icon={FaPhone} placeholder="1122334455" value={formData.telefonoPrincipal} onChange={handleChange} required error={errors.telefonoPrincipal} />
-                        <FormInput id="telefonoSecundario" name="telefonoSecundario" type="tel" label="Teléfono Secundario" icon={FaPhone} placeholder="(Opcional)" value={formData.telefonoSecundario} onChange={handleChange} error={errors.telefonoSecundario} />
+                        <PhoneField label="Teléfono Principal" fieldName="telefonoPrincipal" value={formData.telefonoPrincipal} onPartChange={handlePhonePartChange} required error={errors.telefonoPrincipal} />
+                        <PhoneField label="Teléfono Secundario" fieldName="telefonoSecundario" value={formData.telefonoSecundario} onPartChange={handlePhonePartChange} error={errors.telefonoSecundario} />
                     </div>
                 </div>
 
@@ -234,7 +290,7 @@ export default function CompletarPerfilPage() {
                     <h2 className="text-2xl font-bold text-gray-800 mb-6">Contacto de Emergencia</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
                          <FormInput id="nombreContactoEmergencia" name="nombreContactoEmergencia" type="text" label="Nombre" icon={FaExclamationTriangle} placeholder="Jane Doe" value={formData.nombreContactoEmergencia} onChange={handleChange} required error={errors.nombreContactoEmergencia} />
-                        <FormInput id="telefonoContactoEmergencia" name="telefonoContactoEmergencia" type="tel" label="Teléfono" icon={FaPhone} placeholder="1188776655" value={formData.telefonoContactoEmergencia} onChange={handleChange} required error={errors.telefonoContactoEmergencia} />
+                        <PhoneField label="Teléfono" fieldName="telefonoContactoEmergencia" value={formData.telefonoContactoEmergencia} onPartChange={handlePhonePartChange} required error={errors.telefonoContactoEmergencia} />
                     </div>
                 </div>
 
