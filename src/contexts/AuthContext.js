@@ -2,191 +2,154 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import {
-    onAuthStateChanged,
-    GoogleAuthProvider,
-    signInWithPopup,
-    signOut as firebaseSignOut,
-    signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
-    sendPasswordResetEmail,
-    updatePassword,
-    EmailAuthProvider,
-    reauthenticateWithCredential,
-    signInWithCustomToken,
-    verifyPasswordResetCode,
-    confirmPasswordReset,
+  onAuthStateChanged,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut as firebaseSignOut,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
+  updatePassword,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  signInWithCustomToken,
+  verifyPasswordResetCode,
+  confirmPasswordReset,
 } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase'; 
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { auth, db } from '@/lib/firebase';
 
+/**
+ * Contexto de autenticación global.
+ *
+ * Centraliza:
+ * - Estado del usuario autenticado.
+ * - Estado de carga inicial del auth listener.
+ * - Operaciones de login, registro, logout y recuperación de contraseña.
+ */
 const AuthContext = createContext();
 
+/** Hook de conveniencia para consumir el contexto de autenticación. */
 export const useAuth = () => useContext(AuthContext);
 
+/**
+ * Proveedor principal de autenticación para toda la app.
+ *
+ * No modifica la UI: solamente expone estado y acciones para la capa de presentación.
+ */
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-    // useEffect(() => {
-    //     const unsubscribe = onAuthStateChanged(auth, async (userAuth) => {
-    //         try {
-    //             if (userAuth) {
-    //                 // 1. Create server-side session cookie
-    //                 const idToken = await userAuth.getIdToken();
-    //                 await fetch('/api/auth/session', {
-    //                     method: 'POST',
-    //                     headers: { 'Content-Type': 'application/json' },
-    //                     body: JSON.stringify({ idToken }),
-    //                 });
-                    
-    //                 // 2. Get user data from Firestore
-    //                 const userDocRef = doc(db, 'users', userAuth.uid);
-    //                 const userDocSnap = await getDoc(userDocRef);
+  useEffect(() => {
+    // Única fuente de verdad sobre sesión autenticada en cliente.
+    const unsubscribe = onAuthStateChanged(auth, async (userAuth) => {
+      try {
+        if (userAuth) {
+          // Intentamos enriquecer la info del SDK con el perfil persistido.
+          const userDocRef = doc(db, 'users', userAuth.uid);
+          const userDocSnap = await getDoc(userDocRef);
 
-    //                 if (userDocSnap.exists()) {
-    //                     const userData = userDocSnap.data();
-    //                     setUser({ ...userAuth, ...userData });
-    //                 } else {
-    //                     // This case is mainly for Google Sign-in where the user might not be in our DB yet
-    //                     const newUser = {
-    //                         uid: userAuth.uid,
-    //                         email: userAuth.email,
-    //                         displayName: userAuth.displayName || 'Sin Nombre',
-    //                         photoURL: userAuth.photoURL || null,
-    //                         role: 'dueño',
-    //                         profileCompleted: false,
-    //                         createdAt: new Date(),
-    //                     };
-    //                     await setDoc(userDocRef, newUser);
-    //                     setUser({ ...userAuth, ...newUser });
-    //                 }
-    //                 setIsLoggedIn(true);
+          if (userDocSnap.exists()) {
+            const userData = userDocSnap.data();
+            setUser({ ...userAuth, ...userData });
+          } else {
+            // Primer ingreso (por ejemplo, con Google): creamos perfil mínimo.
+            const newUser = {
+              uid: userAuth.uid,
+              email: userAuth.email,
+              displayName: userAuth.displayName || 'Sin Nombre',
+              photoURL: userAuth.photoURL || null,
+              role: 'dueño',
+              profileCompleted: false,
+              createdAt: new Date(),
+            };
 
-    //             } else {
-    //                 // User is signed out, clear server-side session cookie
-    //                 await fetch('/api/auth/session', { method: 'DELETE' });
-    //                 setUser(null);
-    //                 setIsLoggedIn(false);
-    //             }
-    //         } catch (error) {
-    //             console.error("Error en onAuthStateChanged:", error);
-    //             // Also clear session on error
-    //             await fetch('/api/auth/session', { method: 'DELETE' });
-    //             setUser(null);
-    //             setIsLoggedIn(false);
-    //         } finally {
-    //             setLoading(false);
-    //         }
-    //     });
+            await setDoc(userDocRef, newUser);
+            setUser({ ...userAuth, ...newUser });
+          }
 
-    //     return () => unsubscribe();
-    // }, []);
+          setIsLoggedIn(true);
+        } else {
+          // Sin sesión activa.
+          setUser(null);
+          setIsLoggedIn(false);
+        }
+      } catch (error) {
+        console.error('Error en onAuthStateChanged:', error);
+        // Fallback seguro: ante error evitamos dejar estado inconsistente.
+        setUser(null);
+        setIsLoggedIn(false);
+      } finally {
+        // loading=false indica que ya resolvimos el estado inicial de auth.
+        setLoading(false);
+      }
+    });
 
-    // These functions now just trigger the Firebase SDK methods.
-    // The onAuthStateChanged listener above handles all the session and state logic.
+    return () => unsubscribe();
+  }, []);
 
-    useEffect(() => {
-        // El listener 'onAuthStateChanged' del SDK de Firebase es nuestra ÚNICA fuente de verdad.
-        const unsubscribe = onAuthStateChanged(auth, async (userAuth) => {
-            try {
-                if (userAuth) {
-                    // Si el usuario está autenticado según Firebase, buscamos sus datos en Firestore.
-                    const userDocRef = doc(db, 'users', userAuth.uid);
-                    const userDocSnap = await getDoc(userDocRef);
+  /** Inicia sesión con Google mediante popup. */
+  const loginWithGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    return signInWithPopup(auth, provider);
+  };
 
-                    if (userDocSnap.exists()) {
-                        // El usuario ya tiene un perfil en Firestore, combinamos los datos.
-                        const userData = userDocSnap.data();
-                        setUser({ ...userAuth, ...userData });
-                    } else {
-                        // Es un usuario nuevo (ej. primer login con Google), creamos su perfil.
-                        const newUser = {
-                            uid: userAuth.uid,
-                            email: userAuth.email,
-                            displayName: userAuth.displayName || 'Sin Nombre',
-                            photoURL: userAuth.photoURL || null,
-                            role: 'dueño', // Rol por defecto para nuevos usuarios
-                            profileCompleted: false,
-                            createdAt: new Date(),
-                        };
-                        await setDoc(userDocRef, newUser);
-                        setUser({ ...userAuth, ...newUser });
-                    }
-                    setIsLoggedIn(true);
+  /** Cierra la sesión actual en Firebase Auth. */
+  const signOut = () => firebaseSignOut(auth);
 
-                } else {
-                    // El usuario no está autenticado. Limpiamos el estado.
-                    setUser(null);
-                    setIsLoggedIn(false);
-                }
-            } catch (error) {
-                console.error("Error en onAuthStateChanged:", error);
-                // Ante cualquier error, nos aseguramos de que el usuario esté deslogueado.
-                setUser(null);
-                setIsLoggedIn(false);
-            } finally {
-                // Terminamos de cargar, ya sea con éxito o con error.
-                setLoading(false);
-            }
-        });
+  /** Inicia sesión con custom token (flujo interno / backend). */
+  const signInWithToken = (token) => signInWithCustomToken(auth, token);
 
-        // Limpiamos la suscripción cuando el componente se desmonte.
-        return () => unsubscribe();
-    }, []);
+  /** Inicia sesión con email y contraseña. */
+  const loginWithEmail = (email, password) => signInWithEmailAndPassword(auth, email, password);
 
+  /** Registra un nuevo usuario con email y contraseña. */
+  const registerWithEmailAndPassword = (email, password) =>
+    createUserWithEmailAndPassword(auth, email, password);
 
+  /** Envía email de recuperación de contraseña. */
+  const resetPassword = (email) => sendPasswordResetEmail(auth, email);
 
-    const loginWithGoogle = async () => {
-        const provider = new GoogleAuthProvider();
-        return signInWithPopup(auth, provider);
-    };
+  /**
+   * Cambia la contraseña del usuario actual.
+   *
+   * Firebase exige reautenticación previa para operaciones sensibles.
+   */
+  const changePassword = async (currentPassword, newPassword) => {
+    const userCredential = auth.currentUser;
+    if (!userCredential) throw new Error('No hay usuario autenticado.');
 
-    const signOut = () => firebaseSignOut(auth);
+    const credential = EmailAuthProvider.credential(userCredential.email, currentPassword);
+    await reauthenticateWithCredential(userCredential, credential);
 
-    const signInWithToken = (token) => signInWithCustomToken(auth, token);
-    
-    const loginWithEmail = (email, password) => signInWithEmailAndPassword(auth, email, password);
-    
-    const registerWithEmailAndPassword = (email, password) => createUserWithEmailAndPassword(auth, email, password);
+    return updatePassword(userCredential, newPassword);
+  };
 
-    const resetPassword = (email) => sendPasswordResetEmail(auth, email);
+  /** Verifica validez del código de reseteo recibido por email. */
+  const verifyResetCode = (code) => verifyPasswordResetCode(auth, code);
 
-    const changePassword = async (currentPassword, newPassword) => {
-        const userCredential = auth.currentUser;
-        if (!userCredential) throw new Error("No hay usuario autenticado.");
-        const credential = EmailAuthProvider.credential(userCredential.email, currentPassword);
-        await reauthenticateWithCredential(userCredential, credential);
-        return updatePassword(userCredential, newPassword);
-    };
+  /** Confirma el cambio de contraseña usando el código de reseteo. */
+  const handlePasswordReset = (code, newPassword) =>
+    confirmPasswordReset(auth, code, newPassword);
 
-    const verifyResetCode = (code) => {
-        return verifyPasswordResetCode(auth, code);
-    };
+  const value = {
+    user,
+    isLoggedIn,
+    loading,
+    loginWithGoogle,
+    signOut,
+    // Alias mantenido por compatibilidad para no romper consumidores existentes.
+    logout: signOut,
+    signInWithToken,
+    loginWithEmail,
+    registerWithEmailAndPassword,
+    resetPassword,
+    changePassword,
+    verifyResetCode,
+    handlePasswordReset,
+  };
 
-    const handlePasswordReset = (code, newPassword) => {
-        return confirmPasswordReset(auth, code, newPassword);
-    };
-
-    const value = {
-        user,
-        isLoggedIn,
-        loading,
-        loginWithGoogle,
-        signOut,
-        logout: signOut,
-        signInWithToken,
-        loginWithEmail,
-        registerWithEmailAndPassword,
-        resetPassword,
-        changePassword,
-        verifyResetCode, 
-        handlePasswordReset,
-    };
-
-    return (
-        <AuthContext.Provider value={value}>
-            {children}
-        </AuthContext.Provider>
-    );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
