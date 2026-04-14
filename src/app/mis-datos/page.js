@@ -7,7 +7,8 @@ import { db } from '@/lib/firebase';
 import { actualizarPerfil } from '@/lib/actions/user.actions.js';
 import SubHeader from '@/app/components/SubHeader';
 import BackLink from '@/app/components/BackLink';
-import { FaUser, FaIdCard, FaPhone, FaMapMarkerAlt, FaExclamationTriangle, FaSave, FaEdit, FaTimes, FaKey } from 'react-icons/fa';
+import Modal from '@/app/components/Modal';
+import { FaUser, FaIdCard, FaPhone, FaMapMarkerAlt, FaExclamationTriangle, FaSave, FaEdit, FaTimes, FaKey, FaEnvelope, FaCheckCircle } from 'react-icons/fa';
 import { BARRIOS_SANTA_ROSA, CIUDAD_FIJA, PROVINCIA_FIJA, construirDireccion } from '@/lib/utils/direccion';
 import { buildArgentinePhone, splitArgentinePhone, validateArgentinePhone } from '@/lib/utils/phone';
 
@@ -113,6 +114,9 @@ export default function MisDatosPage() {
     const [formData, setFormData] = useState(buildEditableFormData());
     const [notification, setNotification] = useState({ message: '', type: '' });
     const [isPasswordProvider, setIsPasswordProvider] = useState(false);
+    const [showPasswordResetConfirmModal, setShowPasswordResetConfirmModal] = useState(false);
+    const [showPasswordResetSuccessModal, setShowPasswordResetSuccessModal] = useState(false);
+    const [isSendingResetEmail, setIsSendingResetEmail] = useState(false);
     const [barrioSeleccionado, setBarrioSeleccionado] = useState('');
     const mostrarCampoBarrioManual = barrioSeleccionado === BARRIO_OTRO_VALUE;
 
@@ -251,18 +255,23 @@ export default function MisDatosPage() {
     };
 
     const handlePasswordReset = async () => {
-        if (!user || !user.email) {
+        if (!user || !user.email || isSendingResetEmail) {
             setNotification({ message: 'No se pudo identificar tu correo electrónico.', type: 'error' });
             return;
         }
 
+        setIsSendingResetEmail(true);
         try {
             await resetPassword(user.email);
-            setNotification({ message: '¡Correo enviado! Revisa tu bandeja de entrada.', type: 'success' });
+            setShowPasswordResetConfirmModal(false);
+            setShowPasswordResetSuccessModal(true);
         } catch (error) {
             setNotification({ message: 'No se pudo enviar el correo de restablecimiento.', type: 'error' });
+        } finally {
+            setIsSendingResetEmail(false);
         }
     };
+
 
     if (loading) {
         return <div className="text-center mt-10">Cargando tus datos...</div>;
@@ -372,13 +381,61 @@ export default function MisDatosPage() {
                                 <p className="text-lg text-gray-800 font-medium">Cambiar Contraseña</p>
                                 <p className="text-sm text-gray-500 max-w-prose">Te enviaremos un enlace seguro a tu correo para que puedas establecer una nueva contraseña.</p>
                             </div>
-                            <button onClick={handlePasswordReset} className={`flex items-center text-white py-2 px-4 rounded-lg transition whitespace-nowrap ${isEditing ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-500 hover:bg-red-600'}`} disabled={isEditing}>
+                            <button onClick={() => setShowPasswordResetConfirmModal(true)} className={`flex items-center text-white py-2 px-4 rounded-lg transition whitespace-nowrap ${isEditing ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-500 hover:bg-red-600'}`} disabled={isEditing || isSendingResetEmail}>
                                 <FaKey className="mr-2" /> Enviar enlace
                             </button>
                         </div>
                     </div>
                 )}
             </main>
+
+
+            <Modal isOpen={showPasswordResetConfirmModal} onClose={() => !isSendingResetEmail && setShowPasswordResetConfirmModal(false)}>
+                <div className="text-center">
+                    <div className="w-14 h-14 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4">
+                        <FaEnvelope size={24} />
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-800 mb-2">Confirmar envío de enlace</h3>
+                    <p className="text-gray-600 mb-6">¿Querés que te enviemos el enlace para cambiar tu contraseña a <span className="font-semibold text-gray-800">{user?.email}</span>?</p>
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                        <button
+                            type="button"
+                            onClick={() => setShowPasswordResetConfirmModal(false)}
+                            disabled={isSendingResetEmail}
+                            className="px-5 py-2.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handlePasswordReset}
+                            disabled={isSendingResetEmail}
+                            className="px-5 py-2.5 rounded-lg bg-red-500 text-white hover:bg-red-600 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                            {isSendingResetEmail ? 'Enviando...' : 'Sí, enviar enlace'}
+                        </button>
+                    </div>
+                </div>
+            </Modal>
+
+            <Modal isOpen={showPasswordResetSuccessModal} onClose={() => setShowPasswordResetSuccessModal(false)}>
+                <div className="text-center">
+                    <div className="w-14 h-14 rounded-full bg-green-100 text-green-600 flex items-center justify-center mx-auto mb-4">
+                        <FaCheckCircle size={24} />
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-800 mb-2">¡Email enviado!</h3>
+                    <p className="text-gray-600 mb-2">Te enviamos un correo con el enlace para cambiar tu contraseña.</p>
+                    <p className="text-gray-600 mb-6">Revisá tu bandeja de entrada y también la carpeta de <span className="font-semibold">Spam</span> o correo no deseado.</p>
+                    <button
+                        type="button"
+                        onClick={() => setShowPasswordResetSuccessModal(false)}
+                        className="px-5 py-2.5 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition"
+                    >
+                        Entendido
+                    </button>
+                </div>
+            </Modal>
+
         </>
     );
 }
