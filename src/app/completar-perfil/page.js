@@ -10,6 +10,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { FaUser, FaIdCard, FaPhone, FaMapMarkerAlt, FaExclamationTriangle } from 'react-icons/fa';
 import { BARRIOS_SANTA_ROSA, CIUDAD_FIJA, PROVINCIA_FIJA, construirDireccion } from '@/lib/utils/direccion';
+import { isValidArPhoneValue } from '@/lib/utils/phoneValidation';
 
 const BARRIO_OTRO_VALUE = '__OTRO_BARRIO__';
 
@@ -65,15 +66,15 @@ export default function CompletarPerfilPage() {
     if (!data.altura.trim()) errors.altura = 'La altura es obligatoria.';
 
     if (!data.telefonoPrincipal.trim()) errors.telefonoPrincipal = 'El teléfono principal es obligatorio.';
-    else if (!/^\d{10,15}$/.test(data.telefonoPrincipal)) errors.telefonoPrincipal = 'El teléfono debe tener entre 10 y 15 números.';
+    else if (!isValidArPhoneValue(data.telefonoPrincipal)) errors.telefonoPrincipal = 'Usá un teléfono argentino válido: código de área sin 0 + número sin 15.';
     
-    if (data.telefonoSecundario.trim() && !/^\d{10,15}$/.test(data.telefonoSecundario)) errors.telefonoSecundario = 'Si se ingresa, el teléfono debe tener entre 10 y 15 números.';
+    if (data.telefonoSecundario.trim() && !isValidArPhoneValue(data.telefonoSecundario)) errors.telefonoSecundario = 'Si se ingresa, debe ser un teléfono argentino válido (sin 0 y sin 15).';
 
     if (!data.nombreContactoEmergencia.trim()) errors.nombreContactoEmergencia = 'El nombre de contacto de emergencia es obligatorio.';
     else if (!/^[a-zA-Z\s]+$/.test(data.nombreContactoEmergencia)) errors.nombreContactoEmergencia = 'El nombre solo puede contener letras.';
 
     if (!data.telefonoContactoEmergencia.trim()) errors.telefonoContactoEmergencia = 'El teléfono de emergencia es obligatorio.';
-    else if (!/^\d{10,15}$/.test(data.telefonoContactoEmergencia)) errors.telefonoContactoEmergencia = 'El teléfono debe tener entre 10 y 15 números.';
+    else if (!isValidArPhoneValue(data.telefonoContactoEmergencia)) errors.telefonoContactoEmergencia = 'Usá un teléfono argentino válido: código de área sin 0 + número sin 15.';
     
     return errors;
   };

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import admin from '@/lib/firebaseAdmin';
+import { isValidArPhoneValue } from '@/lib/utils/phoneValidation';
 
 
 export async function signInWithGoogle(idToken) {
@@ -181,17 +182,17 @@ const validacionDatosCompletarPerfil = (data) => {
   if (!altura || !altura.toString().trim()) errors.altura = 'La altura es obligatoria.';
 
   if (!telefonoPrincipal || !telefonoPrincipal.trim()) errors.telefonoPrincipal = 'El teléfono principal es obligatorio.';
-  else if (!/^\d{10,15}$/.test(telefonoPrincipal)) errors.telefonoPrincipal = 'El teléfono debe tener entre 10 y 15 números.';
+  else if (!isValidArPhoneValue(telefonoPrincipal)) errors.telefonoPrincipal = 'El teléfono principal debe ser argentino válido (código de área sin 0 + número sin 15).';
 
-  if (telefonoSecundario && telefonoSecundario.trim() && !/^\d{10,15}$/.test(telefonoSecundario)) {
-      errors.telefonoSecundario = 'Si se ingresa, el teléfono debe tener entre 10 y 15 números.';
+  if (telefonoSecundario && telefonoSecundario.trim() && !isValidArPhoneValue(telefonoSecundario)) {
+      errors.telefonoSecundario = 'Si se ingresa, el teléfono secundario debe ser argentino válido (sin 0 y sin 15).';
   }
 
   if (!nombreContactoEmergencia || !nombreContactoEmergencia.trim()) errors.nombreContactoEmergencia = 'El nombre del contacto de emergencia es obligatorio.';
   else if (!/^[a-zA-Z\s]+$/.test(nombreContactoEmergencia)) errors.nombreContactoEmergencia = 'El nombre del contacto de emergencia solo puede contener letras.';
 
   if (!telefonoContactoEmergencia || !telefonoContactoEmergencia.trim()) errors.telefonoContactoEmergencia = 'El teléfono de emergencia es obligatorio.';
-  else if (!/^\d{10,15}$/.test(telefonoContactoEmergencia)) errors.telefonoContactoEmergencia = 'El teléfono de emergencia debe tener entre 10 y 15 números.';
+  else if (!isValidArPhoneValue(telefonoContactoEmergencia)) errors.telefonoContactoEmergencia = 'El teléfono de emergencia debe ser argentino válido (sin 0 y sin 15).';
 
   return errors;
 };
@@ -320,6 +321,15 @@ export async function actualizarPerfil(userId, userData) {
 
   if (!userId || !nombre || !apellido || !telefonoPrincipal || !direccion || !nombreContactoEmergencia || !telefonoContactoEmergencia) {
     return { success: false, error: 'Faltan datos esenciales para actualizar.' };
+  }
+  if (!isValidArPhoneValue(telefonoPrincipal)) {
+    return { success: false, error: 'El teléfono principal no es válido para Argentina.' };
+  }
+  if (telefonoSecundario && telefonoSecundario.trim() && !isValidArPhoneValue(telefonoSecundario)) {
+    return { success: false, error: 'El teléfono secundario no es válido para Argentina.' };
+  }
+  if (!isValidArPhoneValue(telefonoContactoEmergencia)) {
+    return { success: false, error: 'El teléfono de emergencia no es válido para Argentina.' };
   }
 
   try {

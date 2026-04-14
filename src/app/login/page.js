@@ -9,6 +9,7 @@ import { registerWithEmail } from '@/lib/actions/user.actions.js';
 import PasswordStrengthMeter from '@/app/components/PasswordStrengthMeter';
 import { BARRIOS_SANTA_ROSA, CIUDAD_FIJA, PROVINCIA_FIJA, construirDireccion } from '@/lib/utils/direccion';
 import { getPasswordValidation } from '@/lib/utils/passwordValidation';
+import { composeArPhone, isValidArPhoneParts, sanitizePhonePart } from '@/lib/utils/phoneValidation';
 
 const BARRIO_OTRO_VALUE = '__OTRO_BARRIO__';
 
@@ -22,6 +23,12 @@ export default function LoginPage() {
     const [error, setError] = useState(null);
     const [isRegistering, setIsRegistering] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [telefonosRegistro, setTelefonosRegistro] = useState({
+        telefonoPrincipalArea: '',
+        telefonoPrincipalNumero: '',
+        telefonoEmergenciaArea: '',
+        telefonoEmergenciaNumero: '',
+    });
 
     const [formData, setFormData] = useState({
         nombre: '', apellido: '', dni: '', telefonoPrincipal: '', telefonoSecundario: '', 
@@ -67,10 +74,29 @@ export default function LoginPage() {
                 return setError(`La contraseña no cumple con los requisitos: ${passwordValidation.unmetRequirements[0].text}.`);
             }
             if (!formData.barrio || !formData.calle || !formData.altura) return setError('Debes completar barrio, calle y altura.');
+            if (!isValidArPhoneParts({ areaCode: telefonosRegistro.telefonoPrincipalArea, localNumber: telefonosRegistro.telefonoPrincipalNumero })) {
+                return setError('El teléfono principal debe ser argentino válido: código de área (sin 0) + número (sin 15).');
+            }
+            if (!isValidArPhoneParts({ areaCode: telefonosRegistro.telefonoEmergenciaArea, localNumber: telefonosRegistro.telefonoEmergenciaNumero })) {
+                return setError('El teléfono de emergencia debe ser argentino válido: código de área (sin 0) + número (sin 15).');
+            }
             
             try {
                 const direccion = construirDireccion(formData);
-                const newUserData = { email, password, ...formData, direccion };
+                const newUserData = {
+                    email,
+                    password,
+                    ...formData,
+                    telefonoPrincipal: composeArPhone({
+                        areaCode: telefonosRegistro.telefonoPrincipalArea,
+                        localNumber: telefonosRegistro.telefonoPrincipalNumero,
+                    }),
+                    telefonoContactoEmergencia: composeArPhone({
+                        areaCode: telefonosRegistro.telefonoEmergenciaArea,
+                        localNumber: telefonosRegistro.telefonoEmergenciaNumero,
+                    }),
+                    direccion,
+                };
                 const result = await registerWithEmail(newUserData);
 
                 if (result.success && result.token) {
@@ -96,6 +122,12 @@ export default function LoginPage() {
         const { name, value } = e.target;
         if ((name === 'dni' || name.includes('telefono') || name === 'altura') && value && !/^[0-9]+$/.test(value)) return;
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handlePhonePartChange = (e) => {
+        const { name, value } = e.target;
+        const onlyDigits = sanitizePhonePart(value);
+        setTelefonosRegistro(prev => ({ ...prev, [name]: onlyDigits }));
     };
 
     const handleBarrioChange = (e) => {
@@ -187,11 +219,23 @@ export default function LoginPage() {
                                     <input name="calle" placeholder="Calle" value={formData.calle} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg"/>
                                     <input name="altura" placeholder="Altura" value={formData.altura} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg"/>
                                 </div>
-                                <input name="telefonoPrincipal" placeholder="Teléfono" value={formData.telefonoPrincipal} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"/>
+                                <div className="space-y-2">
+                                    <p className="text-xs text-gray-600">Teléfono principal (Argentina)</p>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <input name="telefonoPrincipalArea" placeholder="Área (sin 0)" value={telefonosRegistro.telefonoPrincipalArea} onChange={handlePhonePartChange} required maxLength={4} className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"/>
+                                        <input name="telefonoPrincipalNumero" placeholder="Número (sin 15)" value={telefonosRegistro.telefonoPrincipalNumero} onChange={handlePhonePartChange} required maxLength={8} className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"/>
+                                    </div>
+                                </div>
                                 
                                 <h2 className="text-center text-base font-semibold text-gray-700">Contacto de Emergencia</h2>
                                 <input name="nombreContactoEmergencia" placeholder="Nombre" value={formData.nombreContactoEmergencia} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"/>
-                                <input name="telefonoContactoEmergencia" placeholder="Teléfono" value={formData.telefonoContactoEmergencia} onChange={handleInputChange} required className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"/>
+                                <div className="space-y-2">
+                                    <p className="text-xs text-gray-600">Teléfono de emergencia (Argentina)</p>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <input name="telefonoEmergenciaArea" placeholder="Área (sin 0)" value={telefonosRegistro.telefonoEmergenciaArea} onChange={handlePhonePartChange} required maxLength={4} className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"/>
+                                        <input name="telefonoEmergenciaNumero" placeholder="Número (sin 15)" value={telefonosRegistro.telefonoEmergenciaNumero} onChange={handlePhonePartChange} required maxLength={8} className="w-full p-3 bg-gray-50 border-gray-200 rounded-lg"/>
+                                    </div>
+                                </div>
                             </>
                         )}
 
