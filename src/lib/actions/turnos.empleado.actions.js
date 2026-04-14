@@ -58,18 +58,30 @@ export async function getTurnsForTransporte() {
       const userId = turnoData.clienteId; // Correcto: usamos clienteId para buscar
       const mascotaId = turnoData.mascotaId;
       
-      let serializableUser = { id: userId, nombre: 'Usuario', apellido: 'Eliminado', direccion: 'N/A', telefono: 'N/A' };
+      let serializableUser = {
+        id: userId,
+        nombre: 'Usuario',
+        apellido: 'Eliminado',
+        direccion: 'N/A',
+        telefono: 'N/A',
+        telefonoPrincipal: 'N/A',
+        telefonoSecundario: '',
+        telefonoContactoEmergencia: 'N/A',
+      };
       if (userId) {
         if (!usersCache.has(userId)) {
           const userDoc = await db.collection('users').doc(userId).get();
           if (userDoc.exists) {
             const userData = userDoc.data();
-            serializableUser = { 
-              id: userDoc.id, 
-              nombre: userData.nombre || 'N/A', 
-              apellido: userData.apellido || 'N/A', 
-              direccion: userData.direccion || 'N/A', 
-              telefono: userData.telefono || 'N/A' 
+            serializableUser = {
+              id: userDoc.id,
+              nombre: userData.nombre || 'N/A',
+              apellido: userData.apellido || 'N/A',
+              direccion: userData.direccion || 'N/A',
+              telefono: userData.telefonoPrincipal || userData.telefono || 'N/A',
+              telefonoPrincipal: userData.telefonoPrincipal || userData.telefono || 'N/A',
+              telefonoSecundario: userData.telefonoSecundario || '',
+              telefonoContactoEmergencia: userData.telefonoContactoEmergencia || 'N/A',
             };
             usersCache.set(userId, serializableUser);
           }
@@ -141,13 +153,31 @@ export async function getTurnsForPeluqueria() {
       const userId = turnoData.clienteId;
       const mascotaId = turnoData.mascotaId;
       
-      let serializableUser = { id: userId, nombre: 'Usuario', apellido: 'Eliminado', direccion: 'N/A', telefono: 'N/A' };
+      let serializableUser = {
+        id: userId,
+        nombre: 'Usuario',
+        apellido: 'Eliminado',
+        direccion: 'N/A',
+        telefono: 'N/A',
+        telefonoPrincipal: 'N/A',
+        telefonoSecundario: '',
+        telefonoContactoEmergencia: 'N/A',
+      };
       if (userId) {
         if (!usersCache.has(userId)) {
           const userDoc = await db.collection('users').doc(userId).get();
           if (userDoc.exists) {
             const userData = userDoc.data();
-            serializableUser = { id: userDoc.id, nombre: userData.nombre || 'N/A', apellido: userData.apellido || 'N/A', direccion: userData.direccion || 'N/A', telefono: userData.telefono || 'N/A' };
+            serializableUser = {
+              id: userDoc.id,
+              nombre: userData.nombre || 'N/A',
+              apellido: userData.apellido || 'N/A',
+              direccion: userData.direccion || 'N/A',
+              telefono: userData.telefonoPrincipal || userData.telefono || 'N/A',
+              telefonoPrincipal: userData.telefonoPrincipal || userData.telefono || 'N/A',
+              telefonoSecundario: userData.telefonoSecundario || '',
+              telefonoContactoEmergencia: userData.telefonoContactoEmergencia || 'N/A',
+            };
             usersCache.set(userId, serializableUser);
           }
         } else {
