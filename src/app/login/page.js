@@ -2,10 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
-import { registerWithEmail } from '@/lib/actions/user.actions.js';
 import PasswordStrengthMeter from '@/app/components/PasswordStrengthMeter';
 import { BARRIOS_SANTA_ROSA, CIUDAD_FIJA, PROVINCIA_FIJA, construirDireccion } from '@/lib/utils/direccion';
 import { getPasswordValidation } from '@/lib/utils/passwordValidation';
@@ -45,8 +44,16 @@ const PhonePairInput = ({ fieldName, areaCode, number, onPartChange, required = 
 };
 
 export default function LoginPage() {
-    const { user, loginWithGoogle, loginWithEmail, signInWithToken } = useAuth();
+    const {
+        user,
+        loginWithGoogle,
+        loginWithEmail,
+        registerWithEmailAndPassword,
+        sendVerificationEmail,
+        refreshCurrentUser,
+    } = useAuth();
     const router = useRouter();
+    const searchParams = useSearchParams();
     
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -71,16 +78,28 @@ export default function LoginPage() {
     });
     const [barrioSeleccionado, setBarrioSeleccionado] = useState('');
     const mostrarCampoBarrioManual = barrioSeleccionado === BARRIO_OTRO_VALUE;
+    const requiereVerificacionEmail =
+        user?.providerData?.some(provider => provider.providerId === 'password') && !user?.emailVerified;
+
+    useEffect(() => {
+        if (searchParams.get('register') === '1') {
+            setIsRegistering(true);
+        }
+    }, [searchParams]);
 
     useEffect(() => {
         if (user) {
+            if (requiereVerificacionEmail) {
+                router.push('/verificar-email');
+                return;
+            }
             if (user.profileCompleted) {
                 router.push('/');
             } else {
                 router.push('/completar-perfil');
             }
         }
-    }, [user, router]);
+    }, [user, requiereVerificacionEmail, router]);
 
     const handleLoginWithGoogle = async () => {
         setError(null);
@@ -113,21 +132,27 @@ export default function LoginPage() {
             
             try {
                 const direccion = construirDireccion(formData);
-                const newUserData = { email, password, ...formData, dni: sanitizeDni(formData.dni), direccion };
-                const result = await registerWithEmail(newUserData);
+                const profileData = { ...formData, dni: sanitizeDni(formData.dni), direccion, email };
 
-                if (result.success && result.token) {
-                    await signInWithToken(result.token);
-                } else {
-                    setError(result.error);
-                }
+                await registerWithEmailAndPassword(email, password);
+                localStorage.setItem('pendingRegistrationProfile', JSON.stringify(profileData));
+                await sendVerificationEmail();
+                router.push('/verificar-email');
             } catch (error) {
                 console.error('Fallo al registrar', error);
-                setError(error.message || 'No se pudo crear la cuenta.');
+                setError(error.message || 'No se pudo iniciar el proceso de registro.');
             }
         } else {
             try {
                 await loginWithEmail(email, password);
+                const refreshedUser = await refreshCurrentUser();
+                const inicioConPassword = refreshedUser?.providerData?.some(provider => provider.providerId === 'password');
+
+                if (inicioConPassword && !refreshedUser?.emailVerified) {
+                    await sendVerificationEmail();
+                    setError('Tu correo no está verificado. Te reenviamos el enlace para verificarlo.');
+                    router.push('/verificar-email');
+                }
             } catch (error) {
                 console.error('Fallo al iniciar sesión', error);
                 setError('Email o contraseña incorrectos.');
