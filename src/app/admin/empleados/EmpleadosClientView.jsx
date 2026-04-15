@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { deleteUserCompletely, updateUserRole } from '@/lib/actions/admin.actions';
 
@@ -131,6 +132,9 @@ export default function EmpleadosClientView({ initialUsers }) {
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rol</th>
+              <th scope="col" className="relative px-6 py-3">
+                <span className="sr-only">Ver</span>
+              </th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
               <th scope="col" className="relative px-6 py-3">
                 <span className="sr-only">Eliminar</span>
@@ -164,6 +168,11 @@ export default function EmpleadosClientView({ initialUsers }) {
                       </option>
                     ))}
                   </select>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <Link href={`/admin/clientes/${user.id}`} className="text-indigo-600 hover:text-indigo-900">
+                    Ver
+                  </Link>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <button

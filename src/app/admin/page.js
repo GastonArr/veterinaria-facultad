@@ -50,9 +50,8 @@ export default function AdminDashboardPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <DashboardCard title="Turnos" description="Gestionar todas las citas" href="/admin/turnos" />
-            <DashboardCard title="Clientes" description="Ver y administrar clientes" href="/admin/clientes" />
             <DashboardCard title="Calendario y Servicio" description="Gestión de días y servicios" href="/admin/servicios" />
-            <DashboardCard title="Empleados" description="Gestión de roles de usuarios" href="/admin/empleados" />
+            <DashboardCard title="Empleados y clientes" description="Ver y administrar empleados y clientes" href="/admin/empleados" />
         </div>
 
         <div className="bg-white rounded-2xl shadow-md p-6 border border-blue-100">
