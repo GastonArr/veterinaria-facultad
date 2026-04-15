@@ -15,11 +15,6 @@ export default function Header() {
     const { user, isLoggedIn, logout, loading } = useAuth(); 
     const router = useRouter();
     const pathname = usePathname();
-    const hiddenHeaderPaths = ['/verificar-email', '/auth/action'];
-
-    if (hiddenHeaderPaths.some((path) => pathname?.startsWith(path))) {
-        return null;
-    }
 
     const ownerRestrictedPaths = ['/turnos/nuevo'];
     const shouldLockHomeForOwner = user?.role === 'dueño' && ownerRestrictedPaths.some((path) => pathname?.startsWith(path));
