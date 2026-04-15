@@ -15,8 +15,6 @@ import {
   signInWithCustomToken,
   verifyPasswordResetCode,
   confirmPasswordReset,
-  sendEmailVerification,
-  reload,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
@@ -114,29 +112,6 @@ export const AuthProvider = ({ children }) => {
   /** Envía email de recuperación de contraseña. */
   const resetPassword = (email) => sendPasswordResetEmail(auth, email);
 
-  /** Envía email de verificación al usuario autenticado actual. */
-  const sendVerificationEmail = async () => {
-    const currentUser = auth.currentUser;
-    if (!currentUser) throw new Error('No hay usuario autenticado.');
-
-    const actionCodeSettings = {
-      url: `${window.location.origin}/login`,
-      handleCodeInApp: false,
-    };
-
-    return sendEmailVerification(currentUser, actionCodeSettings);
-  };
-
-  /**
-   * Refresca el estado del usuario autenticado para obtener claims recientes
-   * (por ejemplo emailVerified luego de abrir el enlace de verificación).
-   */
-  const refreshCurrentUser = async () => {
-    if (!auth.currentUser) return null;
-    await reload(auth.currentUser);
-    return auth.currentUser;
-  };
-
   /**
    * Cambia la contraseña del usuario actual.
    *
@@ -171,8 +146,6 @@ export const AuthProvider = ({ children }) => {
     loginWithEmail,
     registerWithEmailAndPassword,
     resetPassword,
-    sendVerificationEmail,
-    refreshCurrentUser,
     changePassword,
     verifyResetCode,
     handlePasswordReset,
