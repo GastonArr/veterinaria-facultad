@@ -108,6 +108,7 @@ export async function getTurnosByUserId({ userId }) {
         horario: turno.horario || '',
         necesitaTraslado: turno.necesitaTraslado || false,
         motivoCancelacion: turno.motivoCancelacion || '',
+        canceladoPor: turno.canceladoPor || '',
         mascota: { nombre: mascotaNombre }
       };
 
