@@ -198,8 +198,10 @@ export async function updateTurnoStatus({ userId, mascotaId, turnoId, newStatus,
 
     if (newStatus === 'cancelado') {
       updateData.motivoCancelacion = (cancelReason || '').trim();
+      updateData.canceladoPor = 'admin';
     } else {
       updateData.motivoCancelacion = '';
+      updateData.canceladoPor = '';
     }
 
     await turnoRef.update(updateData);
@@ -209,6 +211,7 @@ export async function updateTurnoStatus({ userId, mascotaId, turnoId, newStatus,
     revalidatePath('/admin/empleados/transporte');
     revalidatePath('/admin/empleados/peluqueria');
     revalidatePath('/turnos/mis-turnos');
+    revalidatePath('/');
     
     return { success: true, message: `Turno actualizado.` };
 

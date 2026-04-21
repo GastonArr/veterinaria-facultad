@@ -6,6 +6,7 @@ import LandingPage from './LandingPage';
 import Dashboard from './Dashboard';
 import SubHeader from './SubHeader';
 import RolePortalHero from './RolePortalHero';
+import EstadoTurnosActivosCliente from './EstadoTurnosActivosCliente';
 import Link from 'next/link';
 
 export default function HomePageClient({ serverComponents }) {
@@ -27,6 +28,7 @@ export default function HomePageClient({ serverComponents }) {
       <>
         {isOwner && <SubHeader />}
         <Dashboard canRequestTurn={isOwner}>
+          {isOwner && <EstadoTurnosActivosCliente />}
           {!isOwner && (
             <section className="mb-8 md:mb-10 flex justify-center">
               <Link
