@@ -51,6 +51,8 @@ const TransportActionButton = ({ turno, onUpdate, isLoading }) => {
   );
 };
 
+const canCancelTraslado = (estado) => !['servicio terminado', 'finalizado', 'cancelado'].includes(estado);
+
 const TransporteClientView = ({ initialTurnos }) => {
   const [turnos, setTurnos] = useState(() =>
     Array.isArray(initialTurnos) ? [...initialTurnos].sort((a, b) => new Date(a.fecha) - new Date(b.fecha)) : [],
@@ -65,6 +67,34 @@ const TransporteClientView = ({ initialTurnos }) => {
       setTurnos((prevTurnos) => prevTurnos.map((t) => (t.id === turnoId ? { ...t, estado: newStatus } : t)));
     } else {
       console.error('Fallo al actualizar el turno:', result.error);
+    }
+    setLoadingTurnoId(null);
+  };
+
+  const handleCancelTraslado = async (turno) => {
+    const motivo = window.prompt('Indicá el inconveniente ocurrido para cancelar el traslado:');
+    if (motivo === null) return;
+
+    const motivoNormalizado = motivo.trim();
+    if (!motivoNormalizado) {
+      window.alert('Para cancelar el traslado tenés que informar el inconveniente.');
+      return;
+    }
+
+    setLoadingTurnoId(turno.id);
+    const result = await updateTurnoStatusByEmpleado({
+      clienteId: turno.clienteId,
+      mascotaId: turno.mascotaId,
+      turnoId: turno.id,
+      newStatus: 'cancelado',
+      motivoCancelacion: motivoNormalizado,
+      canceladoPor: 'transportista',
+    });
+
+    if (result.success) {
+      setTurnos((prevTurnos) => prevTurnos.map((t) => (t.id === turno.id ? { ...t, estado: 'cancelado', motivoCancelacion: motivoNormalizado, canceladoPor: 'transportista' } : t)));
+    } else {
+      console.error('Fallo al cancelar el traslado:', result.error);
     }
     setLoadingTurnoId(null);
   };
@@ -149,7 +179,19 @@ const TransporteClientView = ({ initialTurnos }) => {
                 </div>
 
                 <div className="mt-4">
-                  <TransportActionButton turno={turno} onUpdate={handleStatusUpdate} isLoading={loadingTurnoId === turno.id} />
+                  <div className="flex flex-col md:flex-row gap-2">
+                    <TransportActionButton turno={turno} onUpdate={handleStatusUpdate} isLoading={loadingTurnoId === turno.id} />
+                    {canCancelTraslado(turno.estado) && (
+                      <button
+                        type="button"
+                        onClick={() => handleCancelTraslado(turno)}
+                        disabled={loadingTurnoId === turno.id}
+                        className="w-full md:w-auto text-white font-semibold py-2.5 px-4 rounded-lg transition-all duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed bg-rose-600 hover:bg-rose-700"
+                      >
+                        {loadingTurnoId === turno.id ? 'Actualizando...' : 'Cancelar traslado'}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </article>
             );
