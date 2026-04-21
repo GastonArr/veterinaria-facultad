@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { updateTurnoStatusByEmpleado } from '@/lib/actions/turnos.empleado.actions';
+import CancelarTurnoModal from '@/app/admin/turnos/CancelarTurnoModal';
 
 const ACTIONS_BY_STATUS = {
   confirmado: { text: 'Iniciar peluquería', newStatus: 'peluqueria iniciada', className: 'bg-blue-600 hover:bg-blue-700' },
@@ -25,6 +26,7 @@ const STATUS_COLORS = {
 };
 
 const formatHour = (fecha) => `${new Date(fecha).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })} hs`;
+const canCancelServicio = (estado) => !['servicio terminado', 'finalizado', 'cancelado'].includes(estado);
 
 const ActionButton = ({ turno, onUpdate, isLoading }) => {
   const action = ACTIONS_BY_STATUS[turno.estado];
@@ -47,6 +49,7 @@ const PeluqueriaClientView = ({ initialTurnos }) => {
   const [turnos, setTurnos] = useState(() => (Array.isArray(initialTurnos) ? [...initialTurnos].sort((a, b) => new Date(a.fecha) - new Date(b.fecha)) : []));
   const [loadingTurnoId, setLoadingTurnoId] = useState(null);
   const [turnoParaFinalizar, setTurnoParaFinalizar] = useState(null);
+  const [turnoACancelar, setTurnoACancelar] = useState(null);
   const [comentarioCorte, setComentarioCorte] = useState('');
   const [modalError, setModalError] = useState('');
 
@@ -95,6 +98,31 @@ const PeluqueriaClientView = ({ initialTurnos }) => {
       setTurnoParaFinalizar(null);
       setComentarioCorte('');
     }
+  };
+
+  const handleCancelarServicio = async (motivo) => {
+    if (!turnoACancelar) return;
+    setLoadingTurnoId(turnoACancelar.id);
+    const result = await updateTurnoStatusByEmpleado({
+      clienteId: turnoACancelar.clienteId,
+      mascotaId: turnoACancelar.mascotaId,
+      turnoId: turnoACancelar.id,
+      newStatus: 'cancelado',
+      motivoCancelacion: motivo.trim(),
+      canceladoPor: 'peluquera',
+    });
+
+    if (result.success) {
+      setTurnos((prevTurnos) => prevTurnos.map((t) => (
+        t.id === turnoACancelar.id
+          ? { ...t, estado: 'cancelado', motivoCancelacion: motivo.trim(), canceladoPor: 'peluquera' }
+          : t
+      )));
+      setTurnoACancelar(null);
+    } else {
+      setModalError(result.error || 'No se pudo cancelar el servicio.');
+    }
+    setLoadingTurnoId(null);
   };
 
   const orderedTurnos = useMemo(() => [...turnos].sort((a, b) => new Date(a.fecha) - new Date(b.fecha)), [turnos]);
@@ -155,13 +183,33 @@ const PeluqueriaClientView = ({ initialTurnos }) => {
                 </div>
 
                 <div className="mt-4">
-                  <ActionButton turno={turno} onUpdate={handleAction} isLoading={loadingTurnoId === turno.id} />
+                  <div className="flex flex-col md:flex-row gap-2">
+                    <ActionButton turno={turno} onUpdate={handleAction} isLoading={loadingTurnoId === turno.id} />
+                    {canCancelServicio(turno.estado) && (
+                      <button
+                        type="button"
+                        onClick={() => setTurnoACancelar(turno)}
+                        disabled={loadingTurnoId === turno.id}
+                        className="w-full md:w-auto text-white font-semibold py-2.5 px-4 rounded-lg transition-all duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed bg-rose-600 hover:bg-rose-700"
+                      >
+                        {loadingTurnoId === turno.id ? 'Actualizando...' : 'Cancelar corte'}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </article>
             );
           })}
         </div>
       )}
+
+      <CancelarTurnoModal
+        isOpen={!!turnoACancelar}
+        turno={turnoACancelar}
+        onClose={() => setTurnoACancelar(null)}
+        onConfirm={handleCancelarServicio}
+        isSubmitting={!!turnoACancelar && loadingTurnoId === turnoACancelar.id}
+      />
 
       {turnoParaFinalizar && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">

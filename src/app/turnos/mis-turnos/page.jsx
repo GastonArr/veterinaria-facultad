@@ -64,6 +64,7 @@ const TurnoCard = ({ turno, compactarCancelado = false }) => {
     };
 
     const statusMessage = statusMessages[turno.estado];
+    const mostrarRecordatorioPreparacion = turno.necesitaTraslado && ['confirmado', 'traslado confirmado', 'buscando'].includes(turno.estado);
     const [mostrarDetalleCancelado, setMostrarDetalleCancelado] = useState(!compactarCancelado);
     
     // El color del ícono depende del tipo de servicio
@@ -103,6 +104,11 @@ const TurnoCard = ({ turno, compactarCancelado = false }) => {
             {statusMessage && (
                 <div className="mt-4 p-3 rounded-lg border border-emerald-100 bg-emerald-50">
                     <p className="text-sm text-emerald-800 font-semibold">{statusMessage}</p>
+                    {mostrarRecordatorioPreparacion && (
+                        <p className="text-sm text-emerald-800 font-semibold mt-1">
+                            Recordá preparar a tu mascota seca, limpia y lista 20 minutos antes.
+                        </p>
+                    )}
                 </div>
             )}
 
@@ -124,6 +130,15 @@ const TurnoCard = ({ turno, compactarCancelado = false }) => {
                     <p className="text-sm text-red-900">
                         {turno.motivoCancelacion?.trim() || 'La veterinaria canceló este turno. Podés sacar uno nuevo según disponibilidad.'}
                     </p>
+                    {turno.canceladoPor === 'transportista' && (
+                        <p className="text-xs text-red-700 mt-2 font-semibold">Cancelado por transporte</p>
+                    )}
+                    {turno.canceladoPor === 'admin' && (
+                        <p className="text-xs text-red-700 mt-2 font-semibold">Cancelado por administración</p>
+                    )}
+                    {turno.canceladoPor === 'peluquera' && (
+                        <p className="text-xs text-red-700 mt-2 font-semibold">Cancelado por peluquería</p>
+                    )}
                 </div>
             )}
 
