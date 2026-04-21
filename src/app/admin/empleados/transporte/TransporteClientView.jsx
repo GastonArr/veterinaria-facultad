@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from 'react';
 import { updateTurnoStatusByEmpleado } from '@/lib/actions/turnos.empleado.actions';
-import CancelarTurnoModal from '@/app/admin/turnos/CancelarTurnoModal';
 
 const ACTIONS_BY_STATUS = {
   confirmado: { text: 'Confirmar traslado', newStatus: 'traslado confirmado', className: 'bg-emerald-600 hover:bg-emerald-700' },
@@ -52,14 +51,11 @@ const TransportActionButton = ({ turno, onUpdate, isLoading }) => {
   );
 };
 
-const canCancelTraslado = (estado) => !['servicio terminado', 'finalizado', 'cancelado'].includes(estado);
-
 const TransporteClientView = ({ initialTurnos }) => {
   const [turnos, setTurnos] = useState(() =>
     Array.isArray(initialTurnos) ? [...initialTurnos].sort((a, b) => new Date(a.fecha) - new Date(b.fecha)) : [],
   );
   const [loadingTurnoId, setLoadingTurnoId] = useState(null);
-  const [turnoACancelar, setTurnoACancelar] = useState(null);
 
   const handleStatusUpdate = async ({ clienteId, mascotaId, turnoId, newStatus }) => {
     setLoadingTurnoId(turnoId);
@@ -69,28 +65,6 @@ const TransporteClientView = ({ initialTurnos }) => {
       setTurnos((prevTurnos) => prevTurnos.map((t) => (t.id === turnoId ? { ...t, estado: newStatus } : t)));
     } else {
       console.error('Fallo al actualizar el turno:', result.error);
-    }
-    setLoadingTurnoId(null);
-  };
-
-  const handleCancelTraslado = async (motivo) => {
-    if (!turnoACancelar) return;
-    const motivoNormalizado = motivo.trim();
-    setLoadingTurnoId(turnoACancelar.id);
-    const result = await updateTurnoStatusByEmpleado({
-      clienteId: turnoACancelar.clienteId,
-      mascotaId: turnoACancelar.mascotaId,
-      turnoId: turnoACancelar.id,
-      newStatus: 'cancelado',
-      motivoCancelacion: motivoNormalizado,
-      canceladoPor: 'transportista',
-    });
-
-    if (result.success) {
-      setTurnos((prevTurnos) => prevTurnos.map((t) => (t.id === turnoACancelar.id ? { ...t, estado: 'cancelado', motivoCancelacion: motivoNormalizado, canceladoPor: 'transportista' } : t)));
-      setTurnoACancelar(null);
-    } else {
-      console.error('Fallo al cancelar el traslado:', result.error);
     }
     setLoadingTurnoId(null);
   };
@@ -175,32 +149,13 @@ const TransporteClientView = ({ initialTurnos }) => {
                 </div>
 
                 <div className="mt-4">
-                  <div className="flex flex-col md:flex-row gap-2">
-                    <TransportActionButton turno={turno} onUpdate={handleStatusUpdate} isLoading={loadingTurnoId === turno.id} />
-                    {canCancelTraslado(turno.estado) && (
-                      <button
-                        type="button"
-                        onClick={() => setTurnoACancelar(turno)}
-                        disabled={loadingTurnoId === turno.id}
-                        className="w-full md:w-auto text-white font-semibold py-2.5 px-4 rounded-lg transition-all duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed bg-rose-600 hover:bg-rose-700"
-                      >
-                        {loadingTurnoId === turno.id ? 'Actualizando...' : 'Cancelar traslado'}
-                      </button>
-                    )}
-                  </div>
+                  <TransportActionButton turno={turno} onUpdate={handleStatusUpdate} isLoading={loadingTurnoId === turno.id} />
                 </div>
               </article>
             );
           })}
         </div>
       )}
-      <CancelarTurnoModal
-        isOpen={!!turnoACancelar}
-        turno={turnoACancelar}
-        onClose={() => setTurnoACancelar(null)}
-        onConfirm={handleCancelTraslado}
-        isSubmitting={!!turnoACancelar && loadingTurnoId === turnoACancelar.id}
-      />
     </div>
   );
 };
