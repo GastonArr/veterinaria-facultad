@@ -222,7 +222,7 @@ export async function getTurnsForPeluqueria() {
 export async function updateTurnoStatusByEmpleado(params) {
   try {
     // Aceptamos tanto 'userId' como 'clienteId' para ser más flexibles.
-    const { userId, clienteId, mascotaId, turnoId, newStatus, comentario, motivoCancelacion, canceladoPor } = params;
+    const { userId, clienteId, mascotaId, turnoId, newStatus, comentario } = params;
     
     // Usamos el que esté disponible.
     const finalUserId = userId || clienteId;
@@ -244,15 +244,6 @@ export async function updateTurnoStatusByEmpleado(params) {
       updateData.medicamentosSuministrados = [];
     }
 
-    if (newStatus === 'cancelado') {
-      const motivoNormalizado = (motivoCancelacion || '').trim();
-      if (!motivoNormalizado) {
-        throw new Error("Debes informar el inconveniente para cancelar el traslado.");
-      }
-      updateData.motivoCancelacion = motivoNormalizado;
-      updateData.canceladoPor = canceladoPor || 'empleado';
-    }
-
     await turnoRef.update(updateData);
 
     // Revalidamos las rutas para que los cambios se reflejen en la UI
@@ -260,7 +251,6 @@ export async function updateTurnoStatusByEmpleado(params) {
     revalidatePath('/admin/empleados/transporte');
     revalidatePath('/admin/empleados/peluqueria');
     revalidatePath('/turnos/mis-turnos');
-    revalidatePath('/');
     
     return { success: true, message: `Turno actualizado a ${newStatus}.` };
 
