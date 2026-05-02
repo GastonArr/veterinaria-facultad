@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { cancelarTurnoPorUsuario, getTurnosByUserId } from '@/lib/actions/turnos.user.actions';
+import { getTurnosByUserId } from '@/lib/actions/turnos.user.actions';
 
 const MENSAJES_ESTADO = {
   confirmado: 'La veterinaria confirmó tu turno.',
@@ -18,12 +18,9 @@ const MENSAJES_ESTADO = {
   reprogramar: 'Este turno necesita reprogramación.',
 };
 
-const normalizarEstado = (estado) => (estado || '').toString().trim().toLowerCase();
-
 const getMensajeEstado = (turno) => {
-  const estadoNormalizado = normalizarEstado(turno.estado);
-  const mensajeBase = MENSAJES_ESTADO[estadoNormalizado] || 'Seguimos trabajando en tu turno.';
-  const mostrarRecordatorioPreparacion = turno.necesitaTraslado && ['confirmado', 'traslado confirmado', 'buscando'].includes(estadoNormalizado);
+  const mensajeBase = MENSAJES_ESTADO[turno.estado] || 'Seguimos trabajando en tu turno.';
+  const mostrarRecordatorioPreparacion = turno.necesitaTraslado && ['confirmado', 'traslado confirmado', 'buscando'].includes(turno.estado);
 
   if (!mostrarRecordatorioPreparacion) return mensajeBase;
   return `${mensajeBase} Recordá preparar a tu mascota seca, limpia y lista 20 minutos antes.`;
@@ -33,8 +30,6 @@ export default function EstadoTurnosActivosCliente() {
   const { user } = useAuth();
   const [turnosActivos, setTurnosActivos] = useState([]);
   const [avisosCancelacion, setAvisosCancelacion] = useState([]);
-  const [cancelandoId, setCancelandoId] = useState('');
-  const [errorCancelacion, setErrorCancelacion] = useState('');
 
   const getDismissedKey = (turnoId) => `cancelacion-servicio-aceptada-${turnoId}`;
   const todayKey = () => new Date().toISOString().slice(0, 10);
@@ -52,37 +47,6 @@ export default function EstadoTurnosActivosCliente() {
     setAvisosCancelacion((prev) => prev.filter((turno) => turno.id !== turnoId));
   };
 
-
-  const puedeCancelarTurno = (estado) => ['pendiente', 'confirmado', 'traslado confirmado', 'buscando', 'buscado', 'reprogramar'].includes(normalizarEstado(estado));
-
-  const handleCancelarTurno = async (turno) => {
-    if (!window.confirm('¿Querés cancelar este turno? Esta acción no se puede deshacer.')) return;
-
-    const motivo = window.prompt('Contanos el motivo de la cancelación:')?.trim() || '';
-    if (!motivo) {
-      setErrorCancelacion('Debes ingresar un motivo para cancelar el turno.');
-      return;
-    }
-
-    setCancelandoId(turno.id);
-    setErrorCancelacion('');
-
-    const result = await cancelarTurnoPorUsuario({
-      turnoId: turno.id,
-      userId: turno.userId,
-      mascotaId: turno.mascotaId,
-      motivoCancelacion: motivo,
-    });
-
-    if (!result.success) {
-      setErrorCancelacion(result.error || 'No se pudo cancelar el turno.');
-      setCancelandoId('');
-      return;
-    }
-
-    setTurnosActivos((prev) => prev.filter((item) => item.id !== turno.id));
-    setCancelandoId('');
-  };
   useEffect(() => {
     const cargarTurnos = async () => {
       if (!user?.uid) {
@@ -145,25 +109,12 @@ export default function EstadoTurnosActivosCliente() {
           ))}
         </div>
       )}
-      {errorCancelacion && <p className="mt-3 text-sm text-red-700 font-semibold">{errorCancelacion}</p>}
       <div className="mt-3 space-y-3">
         {turnosActivos.map((turno) => (
           <article key={turno.id} className="rounded-lg border border-emerald-200 bg-white p-3">
             <p className="text-sm font-bold text-gray-800">{turno.servicioNombre} · {turno.mascota?.nombre || 'Mascota'}</p>
             <p className="text-xs uppercase font-semibold text-emerald-700 mt-1">Estado: {turno.estado}</p>
             <p className="text-sm text-gray-700 mt-1">{getMensajeEstado(turno)}</p>
-            {puedeCancelarTurno(turno.estado) && (
-              <div className="mt-3">
-                <button
-                  type="button"
-                  onClick={() => handleCancelarTurno(turno)}
-                  disabled={cancelandoId === turno.id}
-                  className="inline-flex items-center rounded-lg border border-red-300 bg-white px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60"
-                >
-                  {cancelandoId === turno.id ? 'Cancelando...' : 'Cancelar turno'}
-                </button>
-              </div>
-            )}
           </article>
         ))}
       </div>
