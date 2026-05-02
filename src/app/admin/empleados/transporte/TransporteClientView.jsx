@@ -116,7 +116,9 @@ const TransporteClientView = ({ initialTurnos }) => {
             const estado = turno.estado;
             const action = ACTIONS_BY_STATUS[estado];
             const progressIndex = Math.max(STEPS.indexOf(estado), 0);
-            const progress = Math.round(((progressIndex + 1) / STEPS.length) * 100);
+            const progress = estado === 'peluqueria finalizada'
+              ? 100
+              : Math.round(((progressIndex + 1) / STEPS.length) * 100);
 
             return (
               <article key={turno.id} className="rounded-2xl border border-slate-200 bg-white p-4 md:p-5 shadow-sm">
