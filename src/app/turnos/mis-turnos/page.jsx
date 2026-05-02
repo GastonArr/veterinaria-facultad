@@ -10,10 +10,11 @@ import { db } from '@/lib/firebase';
 import { collection, getDocs, query } from 'firebase/firestore';
 
 // --- Actions ---
-import { getTurnosByUserId } from '@/lib/actions/turnos.user.actions.js';
+import { cancelarTurnoPorUsuario, getTurnosByUserId } from '@/lib/actions/turnos.user.actions.js';
 
+const normalizarEstado = (estado) => (estado || '').toString().trim().toLowerCase();
 
-const TurnoCard = ({ turno, compactarCancelado = false }) => {
+const TurnoCard = ({ turno, compactarCancelado = false, onCancelarTurno, cancelandoId = '' }) => {
     const statusStyles = {
         pendiente: 'bg-yellow-100 text-yellow-800',
         confirmado: 'bg-blue-100 text-blue-800',
@@ -41,8 +42,10 @@ const TurnoCard = ({ turno, compactarCancelado = false }) => {
         }) + ' hs'
         : 'Fecha no especificada';
 
-    const necesitaReprogramacion = turno.estado === 'reprogramar';
-    const estaCancelado = turno.estado === 'cancelado';
+    const estadoNormalizado = normalizarEstado(turno.estado);
+    const necesitaReprogramacion = estadoNormalizado === 'reprogramar';
+    const estaCancelado = estadoNormalizado === 'cancelado';
+    const puedeCancelar = ['pendiente', 'confirmado', 'traslado confirmado', 'buscando', 'buscado', 'reprogramar'].includes(estadoNormalizado);
     const horaTurno = turno.horario || (turno.fecha
         ? new Date(turno.fecha).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
         : null);
@@ -63,8 +66,8 @@ const TurnoCard = ({ turno, compactarCancelado = false }) => {
         finalizado: 'La atención veterinaria fue finalizada.',
     };
 
-    const statusMessage = statusMessages[turno.estado];
-    const mostrarRecordatorioPreparacion = turno.necesitaTraslado && ['confirmado', 'traslado confirmado', 'buscando'].includes(turno.estado);
+    const statusMessage = statusMessages[estadoNormalizado];
+    const mostrarRecordatorioPreparacion = turno.necesitaTraslado && ['confirmado', 'traslado confirmado', 'buscando'].includes(estadoNormalizado);
     const [mostrarDetalleCancelado, setMostrarDetalleCancelado] = useState(!compactarCancelado);
     
     // El color del ícono depende del tipo de servicio
@@ -157,6 +160,19 @@ const TurnoCard = ({ turno, compactarCancelado = false }) => {
                     </Link>
                 </div>
             )}
+
+            {puedeCancelar && !estaCancelado && (
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                    <button
+                        type="button"
+                        onClick={() => onCancelarTurno?.(turno)}
+                        disabled={cancelandoId === turno.id}
+                        className="inline-flex items-center rounded-lg border border-red-300 bg-white px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60"
+                    >
+                        {cancelandoId === turno.id ? 'Cancelando...' : 'Cancelar turno'}
+                    </button>
+                </div>
+            )}
         </div>
     );
 };
@@ -166,6 +182,7 @@ export default function MisTurnosPage() {
     const { user } = useAuth();
     const [turnos, setTurnos] = useState({ proximos: [], historial: [] });
     const [mostrarCancelados, setMostrarCancelados] = useState(false);
+    const [cancelandoId, setCancelandoId] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -219,6 +236,35 @@ export default function MisTurnosPage() {
         }
     }, [user]);
 
+    const handleCancelarTurno = async (turno) => {
+        if (!window.confirm('¿Querés cancelar este turno? Esta acción no se puede deshacer.')) return;
+        const motivo = window.prompt('Contanos el motivo de la cancelación:')?.trim() || '';
+        if (!motivo) {
+            setError('Debes ingresar un motivo para cancelar el turno.');
+            return;
+        }
+
+        setCancelandoId(turno.id);
+        const result = await cancelarTurnoPorUsuario({
+            turnoId: turno.id,
+            userId: turno.userId,
+            mascotaId: turno.mascotaId,
+            motivoCancelacion: motivo,
+        });
+        setCancelandoId('');
+
+        if (!result.success) {
+            setError(result.error || 'No se pudo cancelar el turno.');
+            return;
+        }
+
+        setTurnos((prev) => ({
+            ...prev,
+            proximos: prev.proximos.filter((item) => item.id !== turno.id),
+            historial: [{ ...turno, estado: 'cancelado', motivoCancelacion: motivo, canceladoPor: 'usuario' }, ...prev.historial],
+        }));
+    };
+
     const renderContent = () => {
         if (loading) {
             return <div className="text-center text-gray-500 py-10">Cargando tus turnos...</div>;
@@ -263,7 +309,7 @@ export default function MisTurnosPage() {
                     <h2 className="flex items-center text-2xl font-bold text-gray-700 mb-4"><FaCalendarCheck className="mr-3 text-blue-500"/>Próximos Turnos</h2>
                     {turnos.proximos.length > 0 ? (
                         <div className="space-y-4">
-                            {turnos.proximos.map(turno => <TurnoCard key={turno.id} turno={turno} />)}
+                            {turnos.proximos.map(turno => <TurnoCard key={turno.id} turno={turno} onCancelarTurno={handleCancelarTurno} cancelandoId={cancelandoId} />)}
                         </div>
                     ) : (<p className="text-gray-500 italic">No tienes turnos próximos.</p>)}
                 </section>
