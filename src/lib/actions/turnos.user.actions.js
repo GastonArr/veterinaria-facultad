@@ -87,12 +87,7 @@ export async function getTurnosByUserId({ userId }) {
       
       const fechaTurno = turno.fecha.toDate();
       const pathParts = doc.ref.path.split('/');
-      const ownerIdFromPath = pathParts[1];
       const mascotaId = pathParts[3];
-
-      if (ownerIdFromPath !== userId || !mascotaId) {
-        return null;
-      }
       
       let mascotaNombre = turno.mascotaNombre || 'Mascota no registrada';
       if (!turno.mascotaNombre && mascotaId) {

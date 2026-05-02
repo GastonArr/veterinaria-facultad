@@ -139,9 +139,6 @@ const TurnoCard = ({ turno, compactarCancelado = false }) => {
                     {turno.canceladoPor === 'peluquera' && (
                         <p className="text-xs text-red-700 mt-2 font-semibold">Cancelado por peluquería</p>
                     )}
-                    {turno.canceladoPor === 'usuario' && (
-                        <p className="text-xs text-red-700 mt-2 font-semibold">Cancelado por vos</p>
-                    )}
                 </div>
             )}
 
