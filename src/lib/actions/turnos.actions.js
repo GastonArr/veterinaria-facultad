@@ -266,22 +266,13 @@ async function updateUserTurno(userId, mascotaId, turnoId, updateData) {
     }
 }
 
-export async function cancelarTurnoUsuario(turnoId, motivoCancelacion) {
+export async function cancelarTurnoUsuario(turnoId) {
     if (!turnoId) {
         return { success: false, error: 'ID del turno no proporcionado.' };
     }
-
-    const motivoNormalizado = (motivoCancelacion || '').trim();
-    if (!motivoNormalizado) {
-        return { success: false, error: 'Debes indicar el motivo de la cancelación.' };
-    }
     try {
         const turnoRef = firestore.collection('turnos').doc(turnoId);
-        await turnoRef.update({
-            estado: 'cancelado',
-            motivoCancelacion: motivoNormalizado,
-            canceladoPor: 'usuario',
-        });
+        await turnoRef.update({ estado: 'cancelado' });
 
         revalidatePath('/turnos/mis-turnos');
         revalidatePath('/admin/turnos');
