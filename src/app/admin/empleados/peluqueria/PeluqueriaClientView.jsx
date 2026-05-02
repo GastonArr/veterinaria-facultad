@@ -26,7 +26,7 @@ const STATUS_COLORS = {
 };
 
 const formatHour = (fecha) => `${new Date(fecha).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })} hs`;
-const canCancelServicio = (estado) => !['servicio terminado', 'finalizado', 'cancelado'].includes(estado);
+const canCancelServicio = (estado) => !['peluqueria finalizada', 'servicio terminado', 'finalizado', 'cancelado'].includes(estado);
 
 const ActionButton = ({ turno, onUpdate, isLoading }) => {
   const action = ACTIONS_BY_STATUS[turno.estado];
