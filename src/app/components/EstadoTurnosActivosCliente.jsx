@@ -49,7 +49,11 @@ export default function EstadoTurnosActivosCliente() {
 
   useEffect(() => {
     const cargarTurnos = async () => {
-      if (!user?.uid) return;
+      if (!user?.uid) {
+        setTurnosActivos([]);
+        setAvisosCancelacion([]);
+        return;
+      }
       const result = await getTurnosByUserId({ userId: user.uid });
       if (result.success) {
         setTurnosActivos(result.data?.proximos || []);
@@ -62,6 +66,9 @@ export default function EstadoTurnosActivosCliente() {
           && !wasDismissedToday(turno.id)
         ));
         setAvisosCancelacion(cancelacionesDelDia);
+      } else {
+        setTurnosActivos([]);
+        setAvisosCancelacion([]);
       }
     };
 
