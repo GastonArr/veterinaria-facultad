@@ -49,7 +49,7 @@ export default function CancelarTurnoModal({ isOpen, turno, onClose, onConfirm, 
           <div className="p-6 space-y-4">
             <div className="rounded-lg bg-red-50 border border-red-100 p-4">
               <p className="text-sm text-red-800">
-                Vas a cancelar el turno de <strong>{turno.mascota?.nombre}</strong> ({turno.user?.nombre} {turno.user?.apellido}).
+                Vas a cancelar el turno de <strong>{turno.mascota?.nombre || 'la mascota seleccionada'}</strong>.
               </p>
               <p className="text-xs text-red-700 mt-1">
                 El motivo que escribas será visible para el cliente en su historial.
