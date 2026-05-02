@@ -34,15 +34,7 @@ export default function AccionesTurnoUsuario({ turno }) {
         setSuccess('');
 
         try {
-            const motivoCancelacion = window.prompt('Contanos el motivo de la cancelación:')?.trim() || '';
-
-            if (!motivoCancelacion) {
-                setError('Debes ingresar un motivo para cancelar el turno.');
-                setLoading(false);
-                return;
-            }
-
-            const result = await cancelarTurnoUsuario(turno.id, motivoCancelacion);
+            const result = await cancelarTurnoUsuario(turno.id);
             if (result.success) {
                 setSuccess('Turno cancelado con éxito.');
                 // El componente se ocultará automáticamente en la siguiente renderización gracias a revalidatePath

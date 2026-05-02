@@ -87,12 +87,7 @@ export async function getTurnosByUserId({ userId }) {
       
       const fechaTurno = turno.fecha.toDate();
       const pathParts = doc.ref.path.split('/');
-      const ownerIdFromPath = pathParts[1];
       const mascotaId = pathParts[3];
-
-      if (ownerIdFromPath !== userId || !mascotaId) {
-        return null;
-      }
       
       let mascotaNombre = turno.mascotaNombre || 'Mascota no registrada';
       if (!turno.mascotaNombre && mascotaId) {
@@ -145,7 +140,6 @@ export async function getTurnosByUserId({ userId }) {
 
     for (const turno of turnosValidos) {
       const fechaTurno = new Date(turno.fecha);
-      const yaPaso = fechaTurno < ahora;
 
       if (estadosFinalizados.has(turno.estado)) {
         historial.push(turno);
@@ -153,15 +147,11 @@ export async function getTurnosByUserId({ userId }) {
       }
 
       if (estadosActivos.has(turno.estado)) {
-        if (yaPaso) {
-          historial.push(turno);
-        } else {
-          proximos.push(turno);
-        }
+        proximos.push(turno);
         continue;
       }
 
-      if (yaPaso) {
+      if (fechaTurno < ahora) {
         historial.push(turno);
       } else {
         proximos.push(turno);
