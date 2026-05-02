@@ -176,48 +176,6 @@ export async function getTurnosByUserId({ userId }) {
   }
 }
 
-
-export async function cancelarTurnoPorUsuario({ turnoId, userId, mascotaId, motivoCancelacion }) {
-  if (!turnoId || !userId || !mascotaId) {
-    return { success: false, error: 'Faltan datos para cancelar el turno.' };
-  }
-
-  const motivoNormalizado = (motivoCancelacion || '').trim();
-  if (!motivoNormalizado) {
-    return { success: false, error: 'Debes ingresar un motivo de cancelación.' };
-  }
-
-  try {
-    const db = admin.firestore();
-    const turnoRef = db.collection('users').doc(userId).collection('mascotas').doc(mascotaId).collection('turnos').doc(turnoId);
-    const turnoDoc = await turnoRef.get();
-
-    if (!turnoDoc.exists) {
-      return { success: false, error: 'El turno que intentás cancelar no existe.' };
-    }
-
-    const estadoActual = turnoDoc.data().estado;
-    const estadosCancelables = new Set(['pendiente', 'confirmado', 'traslado confirmado', 'buscando', 'buscado', 'reprogramar']);
-    if (!estadosCancelables.has(estadoActual)) {
-      return { success: false, error: 'Este turno ya no se puede cancelar desde tu cuenta.' };
-    }
-
-    await turnoRef.update({
-      estado: 'cancelado',
-      motivoCancelacion: motivoNormalizado,
-      canceladoPor: 'usuario',
-    });
-
-    revalidatePath('/');
-    revalidatePath('/turnos/mis-turnos');
-    revalidatePath('/admin/turnos');
-
-    return { success: true };
-  } catch (error) {
-    return { success: false, error: `Ocurrió un error al cancelar el turno: ${error.message}` };
-  }
-}
-
 export async function reprogramarTurnoPorUsuario({ turnoId, userId, mascotaId, nuevaFecha }) {
   if (!turnoId || !userId || !mascotaId || !nuevaFecha) {
     return { success: false, error: 'Faltan datos esenciales para la reprogramación.' };
