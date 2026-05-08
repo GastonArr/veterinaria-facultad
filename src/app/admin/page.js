@@ -52,7 +52,6 @@ export default function AdminDashboardPage() {
             <DashboardCard title="Turnos" description="Gestionar todas las citas" href="/admin/turnos" />
             <DashboardCard title="Calendario y Servicio" description="Gestión de días y servicios" href="/admin/servicios" />
             <DashboardCard title="Empleados y clientes" description="Ver y administrar empleados y clientes" href="/admin/empleados" />
-            <DashboardCard title="Listados e Informes" description="Consultas operativas, métricas y exportación CSV" href="/admin/informes" />
         </div>
 
         <div className="bg-white rounded-2xl shadow-md p-6 border border-blue-100">
