@@ -41,7 +41,7 @@ export default function AccionesTurnoUsuario({ turno }) {
         setSuccess('');
 
         try {
-            const result = await cancelarTurnoUsuario({ turnoId: turno.id, motivoCancelacion });
+            const result = await cancelarTurnoUsuario({ userId: turno.userId, mascotaId: turno.mascotaId, turnoId: turno.id, motivoCancelacion });
             if (result.success) {
                 setSuccess('Turno cancelado con éxito.');
                 setMostrarModalCancelacion(false);

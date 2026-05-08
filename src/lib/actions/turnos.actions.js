@@ -266,12 +266,12 @@ async function updateUserTurno(userId, mascotaId, turnoId, updateData) {
     }
 }
 
-export async function cancelarTurnoUsuario({ turnoId, motivoCancelacion = '' }) {
-    if (!turnoId) {
-        return { success: false, error: 'ID del turno no proporcionado.' };
+export async function cancelarTurnoUsuario({ userId, mascotaId, turnoId, motivoCancelacion = '' }) {
+    if (!userId || !mascotaId || !turnoId) {
+        return { success: false, error: 'Faltan datos para localizar el turno.' };
     }
     try {
-        const turnoRef = firestore.collection('turnos').doc(turnoId);
+        const turnoRef = firestore.collection('users').doc(userId).collection('mascotas').doc(mascotaId).collection('turnos').doc(turnoId);
         const motivo = motivoCancelacion.trim();
         if (!motivo) {
             return { success: false, error: 'Debes informar un motivo para cancelar el turno.' };
