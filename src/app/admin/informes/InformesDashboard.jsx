@@ -117,18 +117,47 @@ export default function InformesDashboard() {
     };
   }, [turnos, month, year]);
 
-  const exportCsv = () => {
+  const exportExcel = () => {
+    const headers = ['Fecha', 'Hora', 'Mascota', 'Dueño', 'Email del dueño', 'Servicio', 'Tipo', 'Responsable', 'Estado', 'Traslado', 'Precio', 'Método de pago', 'Motivo de cancelación'];
     const rows = filtered.map((t) => [
-      formatDate(t.fecha), formatTime(t.fecha), t.mascota?.nombre || '', `${t.user?.nombre || ''} ${t.user?.apellido || ''}`.trim(), t.user?.email || '',
-      t.servicioNombre || '', normalizeType(t.tipo), getResponsable(t), t.estado || '', t.necesitaTraslado ? 'Sí' : 'No', t.precio ?? '', t.metodoPago || '', t.motivoCancelacion || ''
+      formatDate(t.fecha),
+      formatTime(t.fecha),
+      t.mascota?.nombre || '',
+      `${t.user?.nombre || ''} ${t.user?.apellido || ''}`.trim(),
+      t.user?.email || '',
+      t.servicioNombre || '',
+      normalizeType(t.tipo),
+      getResponsable(t),
+      t.estado || '',
+      t.necesitaTraslado ? 'Sí' : 'No',
+      t.precio ?? '',
+      t.metodoPago || '',
+      t.motivoCancelacion || '',
     ]);
-    const headers = ['Fecha','Hora','Mascota','Dueño','Email del dueño','Servicio','Tipo','Responsable','Estado','Traslado','Precio','Método de pago','Motivo de cancelación'];
-    const csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replaceAll('"', '""')}"`).join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+
+    const escapeHtml = (value) => String(value)
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
+
+    const htmlTable = `
+      <table>
+        <thead>
+          <tr>${headers.map((h) => `<th>${escapeHtml(h)}</th>`).join('')}</tr>
+        </thead>
+        <tbody>
+          ${rows.map((r) => `<tr>${r.map((cell) => `<td>${escapeHtml(cell)}</td>`).join('')}</tr>`).join('')}
+        </tbody>
+      </table>
+    `;
+
+    const blob = new Blob([`\ufeff${htmlTable}`], { type: 'application/vnd.ms-excel;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `listado_turnos_${year}-${month}.csv`;
+    a.download = `listado_turnos_${year}-${month}.xls`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -150,7 +179,7 @@ export default function InformesDashboard() {
         <input type="date" className="border rounded px-3 py-2" value={startDate} onChange={(e)=>setStartDate(e.target.value)} />
         <input type="date" className="border rounded px-3 py-2" value={endDate} onChange={(e)=>setEndDate(e.target.value)} />
         <select className="border rounded px-3 py-2" value={orden} onChange={(e)=>setOrden(e.target.value)}><option value="desc">Fecha descendente</option><option value="asc">Fecha ascendente</option></select>
-        <button onClick={exportCsv} className="rounded bg-blue-600 text-white px-3 py-2">Exportar CSV</button>
+        <button onClick={exportExcel} className="rounded bg-blue-600 text-white px-3 py-2">Exportar Excel</button>
       </div>
       <div className="overflow-auto">
         <table className="min-w-full text-sm"><thead><tr className="bg-gray-50 text-left"><th className="p-2">Fecha/Hora</th><th className="p-2">Mascota</th><th className="p-2">Dueño</th><th className="p-2">Servicio</th><th className="p-2">Tipo</th><th className="p-2">Responsable</th><th className="p-2">Estado</th><th className="p-2">Pago</th><th className="p-2">Precio</th><th className="p-2">Traslado</th><th className="p-2">Motivo cancelación</th><th className="p-2">Comentario / medicamentos</th></tr></thead>
