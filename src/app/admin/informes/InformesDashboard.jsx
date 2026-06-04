@@ -18,6 +18,14 @@ function getResponsable(turno) {
   return turno.necesitaTraslado ? `${base} + Transportista (Incluye traslado)` : base;
 }
 
+function formatMedicamentos(medicamentos = []) {
+  return medicamentos.map((med) => {
+    if (typeof med === 'string') return med;
+    const precio = Number(med?.precio) || 0;
+    return precio ? `${med?.nombre || 'Medicamento'} ($${precio})` : med?.nombre || 'Medicamento';
+  }).join(', ');
+}
+
 export default function InformesDashboard() {
   const [turnos, setTurnos] = useState([]);
   const [error, setError] = useState('');
@@ -183,7 +191,7 @@ export default function InformesDashboard() {
       </div>
       <div className="overflow-auto">
         <table className="min-w-full text-sm"><thead><tr className="bg-gray-50 text-left"><th className="p-2">Fecha/Hora</th><th className="p-2">Mascota</th><th className="p-2">Dueño</th><th className="p-2">Servicio</th><th className="p-2">Tipo</th><th className="p-2">Responsable</th><th className="p-2">Estado</th><th className="p-2">Pago</th><th className="p-2">Precio</th><th className="p-2">Traslado</th><th className="p-2">Motivo cancelación</th><th className="p-2">Comentario / medicamentos</th></tr></thead>
-        <tbody>{filtered.map(t=><tr key={t.id} className="border-t align-top"><td className="p-2">{formatDateTime(t.fecha)}</td><td className="p-2">{t.mascota?.nombre || 'N/A'}</td><td className="p-2">{t.user?.nombre} {t.user?.apellido}</td><td className="p-2">{t.servicioNombre || 'N/A'}</td><td className="p-2">{normalizeType(t.tipo)}</td><td className="p-2">{getResponsable(t)}</td><td className="p-2">{t.estado}</td><td className="p-2">{t.metodoPago || '-'}</td><td className="p-2">{typeof t.precio !== 'undefined' && t.precio !== null ? formatMoney(Number(t.precio)) : '-'}</td><td className="p-2">{t.necesitaTraslado ? 'Sí' : 'No'}</td><td className="p-2">{t.motivoCancelacion || '-'}</td><td className="p-2">{t.comentario || '-'} {t.medicamentosSuministrados?.length ? `| Meds: ${t.medicamentosSuministrados.join(', ')}` : ''}</td></tr>)}
+        <tbody>{filtered.map(t=><tr key={t.id} className="border-t align-top"><td className="p-2">{formatDateTime(t.fecha)}</td><td className="p-2">{t.mascota?.nombre || 'N/A'}</td><td className="p-2">{t.user?.nombre} {t.user?.apellido}</td><td className="p-2">{t.servicioNombre || 'N/A'}</td><td className="p-2">{normalizeType(t.tipo)}</td><td className="p-2">{getResponsable(t)}</td><td className="p-2">{t.estado}</td><td className="p-2">{t.metodoPago || '-'}</td><td className="p-2">{typeof t.precio !== 'undefined' && t.precio !== null ? formatMoney(Number(t.precio)) : '-'}</td><td className="p-2">{t.necesitaTraslado ? 'Sí' : 'No'}</td><td className="p-2">{t.motivoCancelacion || '-'}</td><td className="p-2">{t.comentario || '-'} {t.medicamentosSuministrados?.length ? `| Meds: ${formatMedicamentos(t.medicamentosSuministrados)}` : ''}</td></tr>)}
         {!filtered.length && <tr><td colSpan={12} className="p-4 text-center text-gray-500">No hay turnos para los filtros seleccionados.</td></tr>}</tbody></table>
       </div>
     </section>
