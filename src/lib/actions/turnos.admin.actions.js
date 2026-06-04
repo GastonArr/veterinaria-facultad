@@ -18,6 +18,13 @@ const toISOStringOrNull = (timestamp) => {
   return null;
 };
 
+const sumMedicationPrices = (medicamentos = []) => medicamentos.reduce((total, med) => {
+  if (med && typeof med === 'object') {
+    return total + (Number(med.precio) || 0);
+  }
+  return total;
+}, 0);
+
 export async function getTurnsForAdminDashboard() {
   try {
     const timeZone = 'America/Argentina/Buenos_Aires';
@@ -324,9 +331,16 @@ export async function documentarTurno({ userId, mascotaId, turnoId, comentario, 
       throw new Error("El historial del corte es obligatorio para turnos de peluquería.");
     }
 
+    const medicamentosActualizados = esPeluqueria ? [] : (medicamentosSuministrados || []);
+    const medicamentosPrevios = turnoData.medicamentosSuministrados || [];
+    const precioActual = Number(turnoData.precio) || 0;
+    const precioSinMedicamentosPrevios = Math.max(0, precioActual - sumMedicationPrices(medicamentosPrevios));
+
     const updateData = {
       comentario: comentarioNormalizado,
-      medicamentosSuministrados: esPeluqueria ? [] : (medicamentosSuministrados || [])
+      medicamentosSuministrados: medicamentosActualizados,
+      precio: precioSinMedicamentosPrevios + sumMedicationPrices(medicamentosActualizados),
+      precioMedicamentos: sumMedicationPrices(medicamentosActualizados),
     };
 
     await turnoRef.update(updateData);

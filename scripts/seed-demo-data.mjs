@@ -244,27 +244,22 @@ const petPairs = [
   ],
 ];
 
-const clinicaServices = [
-  { nombre: 'Consulta general', precio: 25000, meds: ['Complejo vitamínico x 7 días'] },
-  { nombre: 'Vacunación anual', precio: 18000, meds: ['Vacuna anual aplicada'] },
-  { nombre: 'Control dermatológico', precio: 28000, meds: ['Shampoo medicado 2 veces por semana'] },
-  { nombre: 'Evaluación prequirúrgica', precio: 30000, meds: ['Ayuno indicado y análisis prequirúrgico'] },
-  { nombre: 'Control renal', precio: 27000, meds: ['Alimento renal indicado'] },
-  { nombre: 'Extracción de sangre', precio: 22000, meds: ['Muestra enviada a laboratorio'] },
-  { nombre: 'Consulta traumatológica', precio: 32000, meds: ['Meloxicam 3 días'] },
-  { nombre: 'Limpieza dental', precio: 45000, meds: ['Antibiótico preventivo 5 días'] },
-];
+const DEFAULT_SERVICE_CATALOG = {
+  clinica: [
+    { id: 'consulta_general', nombre: 'Consulta_General', precio: 25000 },
+  ],
+  peluqueria: [
+    { id: 'pelar_4cm', nombre: 'Pelar-4cm', precios: { chico: 10000, mediano: 12000, grande: 15000, muy_grande: 18000 } },
+  ],
+  medicamentos: [
+    { id: 'vacuna_anual', nombre: 'Vacuna anual', precio: 8000 },
+    { id: 'antiparasitario', nombre: 'Antiparasitario', precio: 4500 },
+    { id: 'antiinflamatorio', nombre: 'Antiinflamatorio', precio: 6000 },
+    { id: 'antibiotico', nombre: 'Antibiótico', precio: 7000 },
+  ],
+};
 
-const peluqueriaServices = [
-  { nombre: 'Baño + corte higiénico', precio: 12000 },
-  { nombre: 'Baño sanitario perro grande', precio: 18000 },
-  { nombre: 'Corte de raza + baño', precio: 15000 },
-  { nombre: 'Baño medicado', precio: 14000 },
-  { nombre: 'Deslanado + baño profundo', precio: 22000 },
-  { nombre: 'Baño + corte de mantenimiento', precio: 13000 },
-  { nombre: 'Baño perro grande', precio: 19000 },
-  { nombre: 'Corte tijera + baño', precio: 12500 },
-];
+const TAMAÑO_PRECIOS_MAP = { pequeño: 'chico', mediano: 'mediano', grande: 'grande', muy_grande: 'muy_grande' };
 
 const estados = [
   'finalizado',
@@ -305,6 +300,61 @@ function slugify(value) {
   return value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
+function objectToList(value) {
+  return Object.entries(value || {}).map(([id, data]) => ({ id, ...data }));
+}
+
+function normalizeServiceCatalog(data = {}) {
+  const clinica = objectToList(data.clinica).filter((service) => service.nombre && typeof service.precio !== 'undefined');
+  const peluqueria = objectToList(data.peluqueria).filter((service) => service.nombre && service.precios);
+  const medicamentos = objectToList(data.medicamentos).filter((med) => med.nombre && typeof med.precio !== 'undefined');
+
+  return {
+    clinica: clinica.length ? clinica : DEFAULT_SERVICE_CATALOG.clinica,
+    peluqueria: peluqueria.length ? peluqueria : DEFAULT_SERVICE_CATALOG.peluqueria,
+    medicamentos: medicamentos.length ? medicamentos : DEFAULT_SERVICE_CATALOG.medicamentos,
+  };
+}
+
+async function getServiceCatalog() {
+  const catalogDoc = await db.collection('servicios').doc('catalogo').get();
+  if (!catalogDoc.exists) {
+    console.warn('No existe servicios/catalogo. Se usarán valores demo mínimos para clínica, peluquería y medicamentos.');
+    return DEFAULT_SERVICE_CATALOG;
+  }
+
+  return normalizeServiceCatalog(catalogDoc.data());
+}
+
+function getServicePrice(service, tipo, pet) {
+  if (tipo === 'clinica') return Number(service.precio) || 0;
+
+  const sizeKey = TAMAÑO_PRECIOS_MAP[pet.tamaño] || 'chico';
+  return Number(service.precios?.[sizeKey] ?? service.precios?.chico ?? 0);
+}
+
+function selectMedicamentos(catalog, userIndex, turnIndex, estado) {
+  if (estado === 'cancelado' || !catalog.medicamentos.length || (userIndex + turnIndex) % 2 !== 0) {
+    return [];
+  }
+
+  const first = catalog.medicamentos[(userIndex + turnIndex) % catalog.medicamentos.length];
+  const selected = [{ id: first.id, nombre: first.nombre, precio: Number(first.precio) || 0 }];
+
+  if ((userIndex + turnIndex) % 5 === 0 && catalog.medicamentos.length > 1) {
+    const second = catalog.medicamentos[(userIndex + turnIndex + 1) % catalog.medicamentos.length];
+    if (second.id !== first.id) {
+      selected.push({ id: second.id, nombre: second.nombre, precio: Number(second.precio) || 0 });
+    }
+  }
+
+  return selected;
+}
+
+function sumMedicamentos(medicamentos) {
+  return (medicamentos || []).reduce((total, med) => total + (Number(med.precio) || 0), 0);
+}
+
 function buildDemoUsers() {
   return baseClients.map(([nombre, apellido, barrio, calle], index) => {
     const pair = petPairs[index % petPairs.length].map((pet, petIndex) => ({
@@ -327,7 +377,7 @@ function buildDemoUsers() {
   });
 }
 
-function buildDemoSchedule() {
+function buildDemoSchedule(catalog) {
   const turnos = [];
   const minuteOptions = [0, 30];
   const hourOptions = [8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19];
@@ -335,8 +385,9 @@ function buildDemoSchedule() {
   users.forEach((user, userIndex) => {
     const amount = 3 + (userIndex % 3 === 0 ? 1 : 0);
     for (let turnIndex = 0; turnIndex < amount; turnIndex += 1) {
+      const pet = user.mascotas[turnIndex % user.mascotas.length];
       const tipo = (userIndex + turnIndex) % 2 === 0 ? 'clinica' : 'peluqueria';
-      const services = tipo === 'clinica' ? clinicaServices : peluqueriaServices;
+      const services = tipo === 'clinica' ? catalog.clinica : catalog.peluqueria;
       const service = services[(userIndex + turnIndex * 2) % services.length];
       const estado = estados[(userIndex * 2 + turnIndex) % estados.length];
       const cancelacion = cancelaciones[(userIndex + turnIndex) % cancelaciones.length];
@@ -344,9 +395,15 @@ function buildDemoSchedule() {
       const hour = hourOptions[(userIndex + turnIndex * 3) % hourOptions.length];
       const minute = minuteOptions[(userIndex + turnIndex) % minuteOptions.length];
       const necesitaTraslado = tipo === 'peluqueria' && (userIndex + turnIndex) % 3 !== 1;
+      const medicamentos = tipo === 'clinica' ? selectMedicamentos(catalog, userIndex, turnIndex, estado) : [];
+      const precioBaseServicio = getServicePrice(service, tipo, pet);
+      const precioMedicamentos = sumMedicamentos(medicamentos);
       const comentarioBase = tipo === 'clinica'
         ? comentariosClinica[(userIndex + turnIndex) % comentariosClinica.length]
         : comentariosPeluqueria[(userIndex + turnIndex) % comentariosPeluqueria.length];
+      const comentarioMedicamentos = medicamentos.length
+        ? ` Medicación suministrada: ${medicamentos.map((med) => `${med.nombre} ($${med.precio})`).join(', ')}.`
+        : '';
 
       turnos.push({
         user: userIndex,
@@ -355,17 +412,20 @@ function buildDemoSchedule() {
         hour,
         minute,
         tipo,
+        servicioId: service.id,
         servicioNombre: service.nombre,
         estado,
-        precio: service.precio,
+        precio: precioBaseServicio + precioMedicamentos,
+        precioBaseServicio,
+        precioMedicamentos,
         metodoPago: (userIndex + turnIndex) % 2 === 0 ? 'efectivo' : 'transferencia',
         traslado: necesitaTraslado,
         canceladoPor: estado === 'cancelado' ? cancelacion.canceladoPor : undefined,
         motivo: estado === 'cancelado' ? cancelacion.motivo : '',
         comentario: estado === 'cancelado'
-          ? `${comentarioBase} Registro de cancelación: ${cancelacion.motivo}`
-          : comentarioBase,
-        meds: tipo === 'clinica' ? service.meds : [],
+          ? `${comentarioBase}${comentarioMedicamentos} Registro de cancelación: ${cancelacion.motivo}`
+          : `${comentarioBase}${comentarioMedicamentos}`,
+        meds: medicamentos,
       });
     }
   });
@@ -374,7 +434,6 @@ function buildDemoSchedule() {
 }
 
 const users = buildDemoUsers();
-const schedule = buildDemoSchedule();
 
 function buildUserDoc(user) {
   return {
@@ -428,9 +487,11 @@ function buildTurnoDoc(item, index) {
     mascotaId: pet.id,
     mascotaNombre: pet.nombre,
     mascotaTamaño: pet.tamaño,
-    servicioId: slugify(item.servicioNombre),
+    servicioId: item.servicioId || slugify(item.servicioNombre),
     servicioNombre: item.servicioNombre,
     precio: item.precio,
+    precioBaseServicio: item.precioBaseServicio,
+    precioMedicamentos: item.precioMedicamentos || 0,
     metodoPago: item.metodoPago,
     estado: item.estado,
     creadoEn: timestampFromOffset(item.offset - 10, 9 + (index % 8), index % 2 ? 30 : 0).timestamp,
@@ -485,6 +546,8 @@ async function clearSeedData() {
 }
 
 async function seedData() {
+  const catalog = await getServiceCatalog();
+  const schedule = buildDemoSchedule(catalog);
   const batch = db.batch();
   let userCount = 0;
   let petCount = 0;

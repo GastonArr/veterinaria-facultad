@@ -45,11 +45,11 @@ Si ya tenés `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, el script lo usa como respaldo p
 - 50 clientes demo con datos de contacto.
 - 100 mascotas demo.
 - Más de 160 turnos en `users/{userId}/mascotas/{mascotaId}/turnos/{turnoId}`.
-- Turnos de clínica y peluquería distribuidos en meses y fechas diferentes.
+- Turnos de clínica y peluquería distribuidos en meses y fechas diferentes, usando el catálogo real de `servicios/catalogo` cuando existe.
 - Turnos con y sin traslado.
 - Estados variados: `pendiente`, `confirmado`, `traslado confirmado`, `buscando`, `reprogramar`, `finalizado`, `peluqueria finalizada`, `servicio terminado` y `cancelado`.
 - Cancelaciones variadas por `cliente`, `admin`, `transportista` y `peluquera`.
-- Motivos de cancelación, comentarios de atención/peluquería y medicamentos suministrados en turnos clínicos.
+- Motivos de cancelación, comentarios de atención/peluquería y medicamentos suministrados en turnos clínicos; cuando hay medicación, el precio del turno suma el valor del medicamento al precio base del servicio.
 
 ## Comandos
 
