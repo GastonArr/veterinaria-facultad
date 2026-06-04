@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import admin from 'firebase-admin';
 
 const DEMO_TAG = 'demo-seed-informes-v1';
@@ -7,31 +9,119 @@ const args = new Set(process.argv.slice(2));
 const shouldClear = args.has('--clear');
 const shouldReset = args.has('--reset');
 
-function requireEnv(name) {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`Falta la variable de entorno ${name}.`);
+loadLocalEnvFiles();
+
+function parseEnvLine(line) {
+  const trimmed = line.trim();
+  if (!trimmed || trimmed.startsWith('#')) return null;
+
+  const separatorIndex = trimmed.indexOf('=');
+  if (separatorIndex === -1) return null;
+
+  const key = trimmed.slice(0, separatorIndex).trim();
+  let value = trimmed.slice(separatorIndex + 1).trim();
+
+  if (
+    (value.startsWith('"') && value.endsWith('"')) ||
+    (value.startsWith("'") && value.endsWith("'"))
+  ) {
+    value = value.slice(1, -1);
   }
-  return value;
+
+  return { key, value };
+}
+
+function loadLocalEnvFiles() {
+  ['.env.local', '.env'].forEach((fileName) => {
+    const filePath = path.join(process.cwd(), fileName);
+    if (!fs.existsSync(filePath)) return;
+
+    const lines = fs.readFileSync(filePath, 'utf8').split(/\r?\n/);
+    lines.forEach((line) => {
+      const parsed = parseEnvLine(line);
+      if (parsed && !process.env[parsed.key]) {
+        process.env[parsed.key] = parsed.value;
+      }
+    });
+  });
+}
+
+function missingCredentialsMessage(missingNames) {
+  return `
+No pude inicializar Firebase Admin porque faltan credenciales: ${missingNames.join(', ')}.
+
+El script ahora lee automáticamente .env.local y .env, pero para escribir en Firestore necesita credenciales de servidor, no alcanza con las NEXT_PUBLIC_* del frontend.
+
+Opciones rápidas:
+1) En Firebase Console > Configuración del proyecto > Cuentas de servicio, generá una clave privada JSON.
+2) Usá una de estas formas:
+
+   A. Guardá el JSON en una ruta local y ejecutá:
+      FIREBASE_SERVICE_ACCOUNT_KEY=./serviceAccountKey.json npm run seed:demo
+
+   B. O copiá estos valores en .env.local:
+      FIREBASE_PROJECT_ID=tu-project-id
+      FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@tu-project-id.iam.gserviceaccount.com
+      FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+
+En PowerShell podés setear la ruta así:
+$env:FIREBASE_SERVICE_ACCOUNT_KEY = ".\\serviceAccountKey.json"; npm run seed:demo
+`;
+}
+
+function serviceAccountFromJson(jsonValue) {
+  const parsed = JSON.parse(jsonValue);
+  return {
+    project_id: parsed.project_id,
+    client_email: parsed.client_email,
+    private_key: parsed.private_key?.replace(/\\n/g, '\n'),
+  };
+}
+
+function getServiceAccount() {
+  if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+    return serviceAccountFromJson(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+  }
+
+  if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY || process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+    const keyPath = process.env.FIREBASE_SERVICE_ACCOUNT_KEY || process.env.GOOGLE_APPLICATION_CREDENTIALS;
+    const absolutePath = path.resolve(process.cwd(), keyPath);
+    return serviceAccountFromJson(fs.readFileSync(absolutePath, 'utf8'));
+  }
+
+  return {
+    project_id: process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    client_email: process.env.FIREBASE_CLIENT_EMAIL,
+    private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+  };
 }
 
 function initializeFirebaseAdmin() {
   if (admin.apps.length) return admin.app();
 
-  const projectId = requireEnv('FIREBASE_PROJECT_ID');
-  const clientEmail = requireEnv('FIREBASE_CLIENT_EMAIL');
-  const privateKey = requireEnv('FIREBASE_PRIVATE_KEY').replace(/\\n/g, '\n');
+  const serviceAccount = getServiceAccount();
+  const missingNames = [
+    ['FIREBASE_PROJECT_ID', serviceAccount.project_id],
+    ['FIREBASE_CLIENT_EMAIL', serviceAccount.client_email],
+    ['FIREBASE_PRIVATE_KEY', serviceAccount.private_key],
+  ].filter(([, value]) => !value).map(([name]) => name);
+
+  if (missingNames.length > 0) {
+    throw new Error(missingCredentialsMessage(missingNames));
+  }
 
   return admin.initializeApp({
-    credential: admin.credential.cert({
-      project_id: projectId,
-      client_email: clientEmail,
-      private_key: privateKey,
-    }),
+    credential: admin.credential.cert(serviceAccount),
   });
 }
 
-const db = initializeFirebaseAdmin().firestore();
+let db;
+try {
+  db = initializeFirebaseAdmin().firestore();
+} catch (error) {
+  console.error(error.message);
+  process.exit(1);
+}
 
 function toTimestamp(date, time) {
   return admin.firestore.Timestamp.fromDate(new Date(`${date}T${time}:00-03:00`));
