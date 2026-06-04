@@ -148,119 +148,233 @@ function turnoId(userId, mascotaId, index) {
   return `${DEMO_TAG}-${userId}-${mascotaId}-${String(index + 1).padStart(2, '0')}`;
 }
 
-const users = [
-  {
-    id: 'demo-cliente-sofia-pereyra',
-    nombre: 'Sofía',
-    apellido: 'Pereyra',
-    email: 'sofia.pereyra.demo@magalimartin.test',
-    dni: '32145876',
-    telefonoPrincipal: '2954123456',
-    barrio: 'Villa Alonso',
-    calle: 'Almirante Brown',
-    altura: '1240',
-    mascotas: [
-      { id: 'luna', nombre: 'Luna', especie: 'Perro', raza: 'Caniche toy', tamaño: 'pequeño', sexo: 'hembra' },
-      { id: 'milo', nombre: 'Milo', especie: 'Gato', raza: 'Europeo común', tamaño: 'pequeño', sexo: 'macho' },
-    ],
-  },
-  {
-    id: 'demo-cliente-matias-roldan',
-    nombre: 'Matías',
-    apellido: 'Roldán',
-    email: 'matias.roldan.demo@magalimartin.test',
-    dni: '28456123',
-    telefonoPrincipal: '2954234567',
-    barrio: 'Centro',
-    calle: 'Av. San Martín',
-    altura: '842',
-    mascotas: [
-      { id: 'toby', nombre: 'Toby', especie: 'Perro', raza: 'Labrador', tamaño: 'grande', sexo: 'macho' },
-      { id: 'nina', nombre: 'Nina', especie: 'Perro', raza: 'Mestiza', tamaño: 'mediano', sexo: 'hembra' },
-    ],
-  },
-  {
-    id: 'demo-cliente-carla-benitez',
-    nombre: 'Carla',
-    apellido: 'Benítez',
-    email: 'carla.benitez.demo@magalimartin.test',
-    dni: '36789124',
-    telefonoPrincipal: '2954345678',
-    barrio: 'Fitte',
-    calle: 'Chile',
-    altura: '530',
-    mascotas: [
-      { id: 'roma', nombre: 'Roma', especie: 'Perro', raza: 'Bulldog francés', tamaño: 'pequeño', sexo: 'hembra' },
-      { id: 'simba', nombre: 'Simba', especie: 'Gato', raza: 'Naranja doméstico', tamaño: 'mediano', sexo: 'macho' },
-    ],
-  },
-  {
-    id: 'demo-cliente-julian-gomez',
-    nombre: 'Julián',
-    apellido: 'Gómez',
-    email: 'julian.gomez.demo@magalimartin.test',
-    dni: '30111222',
-    telefonoPrincipal: '2954456789',
-    barrio: 'Plan 5000',
-    calle: 'México',
-    altura: '1722',
-    mascotas: [
-      { id: 'bruno', nombre: 'Bruno', especie: 'Perro', raza: 'Ovejero alemán', tamaño: 'grande', sexo: 'macho' },
-      { id: 'kiara', nombre: 'Kiara', especie: 'Perro', raza: 'Cocker spaniel', tamaño: 'mediano', sexo: 'hembra' },
-    ],
-  },
-  {
-    id: 'demo-cliente-valentina-acosta',
-    nombre: 'Valentina',
-    apellido: 'Acosta',
-    email: 'valentina.acosta.demo@magalimartin.test',
-    dni: '39654781',
-    telefonoPrincipal: '2954567890',
-    barrio: 'Colonia Escalante',
-    calle: 'Urquiza',
-    altura: '315',
-    mascotas: [
-      { id: 'olivia', nombre: 'Olivia', especie: 'Perro', raza: 'Shih tzu', tamaño: 'pequeño', sexo: 'hembra' },
-      { id: 'thor', nombre: 'Thor', especie: 'Perro', raza: 'Pitbull', tamaño: 'grande', sexo: 'macho' },
-    ],
-  },
-  {
-    id: 'demo-cliente-ricardo-sosa',
-    nombre: 'Ricardo',
-    apellido: 'Sosa',
-    email: 'ricardo.sosa.demo@magalimartin.test',
-    dni: '25777444',
-    telefonoPrincipal: '2954678901',
-    barrio: 'Butaló',
-    calle: 'Hucal',
-    altura: '261',
-    mascotas: [
-      { id: 'coco', nombre: 'Coco', especie: 'Perro', raza: 'Yorkshire', tamaño: 'pequeño', sexo: 'macho' },
-      { id: 'mora', nombre: 'Mora', especie: 'Gato', raza: 'Siamés', tamaño: 'pequeño', sexo: 'hembra' },
-    ],
-  },
+const baseClients = [
+  ['Sofía', 'Pereyra', 'Villa Alonso', 'Almirante Brown'],
+  ['Matías', 'Roldán', 'Centro', 'Av. San Martín'],
+  ['Carla', 'Benítez', 'Fitte', 'Chile'],
+  ['Julián', 'Gómez', 'Plan 5000', 'México'],
+  ['Valentina', 'Acosta', 'Colonia Escalante', 'Urquiza'],
+  ['Ricardo', 'Sosa', 'Butaló', 'Hucal'],
+  ['Camila', 'Fernández', 'Villa Santillán', 'Pío XII'],
+  ['Nicolás', 'Molina', 'Los Hornos', 'Brasil'],
+  ['Mariana', 'López', 'Aeropuerto', 'Tello'],
+  ['Agustín', 'Navarro', 'Villa Elisa', 'Raúl B. Díaz'],
+  ['Lucía', 'Torres', 'Centro', 'Gil'],
+  ['Federico', 'Suárez', 'Villa Alonso', 'Mansilla'],
+  ['Paula', 'Herrera', 'Fitte', 'Unanue'],
+  ['Germán', 'Castro', 'Butaló', 'Cavero'],
+  ['Florencia', 'Medina', 'Plan 5000', 'Utracán'],
+  ['Diego', 'Romero', 'Los Fresnos', 'Santiago Marzo'],
+  ['Natalia', 'Aguirre', 'Villa del Busto', 'Antártida Argentina'],
+  ['Ezequiel', 'Silva', 'Colonia Escalante', 'Jujuy'],
+  ['Rocío', 'Vega', 'Villa Parque', 'Entre Ríos'],
+  ['Martín', 'Ortega', 'Centro', 'Rivadavia'],
+  ['Noelia', 'Ramos', 'Villa Santillán', 'Pasteur'],
+  ['Andrés', 'Cabrera', 'Los Hornos', 'Luro'],
+  ['Milagros', 'Ponce', 'Butaló', 'Catriló'],
+  ['Sebastián', 'Morales', 'Aeropuerto', 'Ameghino'],
+  ['Antonella', 'Ibarra', 'Fitte', 'Varela'],
+  ['Leandro', 'Fuentes', 'Villa Alonso', 'Córdoba'],
+  ['Micaela', 'Ríos', 'Colonia Escalante', 'Mendoza'],
+  ['Tomás', 'Villar', 'Plan 5000', 'Santa Cruz'],
+  ['Daniela', 'Méndez', 'Villa del Busto', 'Neuquén'],
+  ['Pablo', 'Carrizo', 'Los Fresnos', 'Catamarca'],
+  ['Julieta', 'Godoy', 'Centro', 'Moreno'],
+  ['Maximiliano', 'Luna', 'Villa Elisa', 'Tucumán'],
+  ['Gabriela', 'Farias', 'Butaló', 'Toay'],
+  ['Emiliano', 'Correa', 'Fitte', 'Córdoba'],
+  ['Aldana', 'Mansilla', 'Los Hornos', 'Stieben'],
+  ['Hernán', 'Quiroga', 'Aeropuerto', '1 de Mayo'],
+  ['Cecilia', 'Arias', 'Villa Santillán', 'Olascoaga'],
+  ['Santiago', 'Ferreyra', 'Centro', 'Pellegrini'],
+  ['Bárbara', 'Miranda', 'Villa Parque', 'Salta'],
+  ['Ignacio', 'Peralta', 'Plan 5000', 'Chaco'],
+  ['Josefina', 'Campos', 'Colonia Escalante', 'La Rioja'],
+  ['Gonzalo', 'Duarte', 'Villa Alonso', 'San Luis'],
+  ['Pilar', 'Sánchez', 'Los Fresnos', 'Formosa'],
+  ['Ramiro', 'Vázquez', 'Butaló', 'Victorica'],
+  ['Ana', 'Espinosa', 'Fitte', 'España'],
+  ['Brenda', 'Núñez', 'Aeropuerto', 'Roque Sáenz Peña'],
+  ['Cristian', 'Leiva', 'Villa del Busto', 'Guatraché'],
+  ['Eliana', 'Montiel', 'Villa Elisa', 'Cervantes'],
+  ['Lucas', 'Paz', 'Centro', '9 de Julio'],
+  ['Verónica', 'Álvarez', 'Los Hornos', 'Don Bosco'],
 ];
 
-const schedule = [
-  { user: 0, pet: 0, offset: -42, hour: 9, minute: 0, tipo: 'clinica', servicioNombre: 'Consulta general', estado: 'finalizado', precio: 25000, metodoPago: 'efectivo', comentario: 'Control general completo. Peso estable, mucosas normales y buen ánimo.', meds: ['Complejo vitamínico x 7 días'] },
-  { user: 0, pet: 0, offset: -36, hour: 14, minute: 0, tipo: 'peluqueria', servicioNombre: 'Baño + corte higiénico', estado: 'servicio terminado', precio: 12000, metodoPago: 'transferencia', traslado: true, comentario: 'Se realizó baño hipoalergénico y corte higiénico. Se entregó perfumada.' },
-  { user: 0, pet: 1, offset: -18, hour: 10, minute: 30, tipo: 'clinica', servicioNombre: 'Vacunación anual', estado: 'finalizado', precio: 18000, metodoPago: 'efectivo', comentario: 'Aplicada vacuna triple felina. Se recomienda observación 24 hs.', meds: ['Vacuna triple felina'] },
-  { user: 1, pet: 0, offset: -25, hour: 16, minute: 0, tipo: 'peluqueria', servicioNombre: 'Baño sanitario perro grande', estado: 'cancelado', precio: 18000, metodoPago: 'transferencia', traslado: true, canceladoPor: 'transportista', motivo: 'El vehículo tuvo una demora por corte de calle y no se pudo retirar a tiempo.', comentario: 'Cancelación operativa informada por transporte.' },
-  { user: 1, pet: 1, offset: -9, hour: 11, minute: 0, tipo: 'clinica', servicioNombre: 'Control dermatológico', estado: 'reprogramar', precio: 28000, metodoPago: 'efectivo', comentario: 'La administración solicitó reprogramar por agenda médica completa.' },
-  { user: 1, pet: 1, offset: 4, hour: 15, minute: 30, tipo: 'clinica', servicioNombre: 'Revisión de piel', estado: 'confirmado', precio: 28000, metodoPago: 'efectivo', comentario: 'Turno confirmado para evaluar irritación recurrente.' },
-  { user: 2, pet: 0, offset: -31, hour: 13, minute: 0, tipo: 'peluqueria', servicioNombre: 'Corte de raza + baño', estado: 'cancelado', precio: 15000, metodoPago: 'efectivo', traslado: false, canceladoPor: 'cliente', motivo: 'La mascota amaneció con decaimiento y la dueña prefirió esperar.', comentario: 'Cliente avisó con anticipación.' },
-  { user: 2, pet: 0, offset: -12, hour: 17, minute: 0, tipo: 'peluqueria', servicioNombre: 'Baño medicado', estado: 'peluqueria finalizada', precio: 14000, metodoPago: 'transferencia', traslado: true, comentario: 'Se usó shampoo medicado indicado por veterinaria. Pelo con menos descamación.' },
-  { user: 2, pet: 1, offset: 1, hour: 9, minute: 30, tipo: 'clinica', servicioNombre: 'Consulta por inapetencia', estado: 'pendiente', precio: 25000, metodoPago: 'efectivo', comentario: 'Pendiente de confirmación por administración.' },
-  { user: 3, pet: 0, offset: -60, hour: 8, minute: 30, tipo: 'clinica', servicioNombre: 'Consulta traumatológica', estado: 'finalizado', precio: 32000, metodoPago: 'transferencia', comentario: 'Marcha normal al control. Continuar caminatas cortas.', meds: ['Meloxicam 3 días'] },
-  { user: 3, pet: 0, offset: -5, hour: 12, minute: 0, tipo: 'peluqueria', servicioNombre: 'Deslanado + baño profundo', estado: 'cancelado', precio: 22000, metodoPago: 'efectivo', traslado: true, canceladoPor: 'peluquera', motivo: 'La peluquera informó irritación en piel y recomendó evaluación médica previa.', comentario: 'No se realizó el servicio para evitar empeorar la piel.' },
-  { user: 3, pet: 1, offset: 8, hour: 18, minute: 0, tipo: 'peluqueria', servicioNombre: 'Baño + corte de mantenimiento', estado: 'traslado confirmado', precio: 13000, metodoPago: 'transferencia', traslado: true, comentario: 'Traslado confirmado. Retiro coordinado por la tarde.' },
-  { user: 4, pet: 0, offset: -20, hour: 15, minute: 0, tipo: 'clinica', servicioNombre: 'Limpieza dental', estado: 'cancelado', precio: 45000, metodoPago: 'transferencia', traslado: false, canceladoPor: 'admin', motivo: 'Se canceló por mantenimiento programado del consultorio.', comentario: 'Administración ofreció prioridad para reprogramación.' },
-  { user: 4, pet: 0, offset: 12, hour: 10, minute: 0, tipo: 'clinica', servicioNombre: 'Evaluación prequirúrgica', estado: 'pendiente', precio: 30000, metodoPago: 'efectivo', comentario: 'Solicitar ayuno y estudios previos si confirma cirugía.' },
-  { user: 4, pet: 1, offset: -2, hour: 19, minute: 0, tipo: 'peluqueria', servicioNombre: 'Baño perro grande', estado: 'buscando', precio: 19000, metodoPago: 'efectivo', traslado: true, comentario: 'Transportista en camino al domicilio del cliente.' },
-  { user: 5, pet: 0, offset: -14, hour: 11, minute: 30, tipo: 'peluqueria', servicioNombre: 'Corte tijera + baño', estado: 'servicio terminado', precio: 12500, metodoPago: 'transferencia', traslado: false, comentario: 'Corte a tijera prolijo. Se detectaron nudos detrás de orejas.' },
-  { user: 5, pet: 1, offset: -7, hour: 9, minute: 0, tipo: 'clinica', servicioNombre: 'Control renal', estado: 'finalizado', precio: 27000, metodoPago: 'efectivo', comentario: 'Control renal estable. Repetir análisis en 3 meses.', meds: ['Alimento renal indicado'] },
-  { user: 5, pet: 1, offset: 3, hour: 16, minute: 30, tipo: 'clinica', servicioNombre: 'Extracción de sangre', estado: 'confirmado', precio: 22000, metodoPago: 'transferencia', comentario: 'Confirmado. La mascota debe asistir con 8 hs de ayuno.' },
+const petPairs = [
+  [
+    { id: 'luna', nombre: 'Luna', especie: 'Perro', raza: 'Caniche toy', tamaño: 'pequeño', sexo: 'hembra' },
+    { id: 'milo', nombre: 'Milo', especie: 'Gato', raza: 'Europeo común', tamaño: 'pequeño', sexo: 'macho' },
+  ],
+  [
+    { id: 'toby', nombre: 'Toby', especie: 'Perro', raza: 'Labrador', tamaño: 'grande', sexo: 'macho' },
+    { id: 'nina', nombre: 'Nina', especie: 'Perro', raza: 'Mestiza', tamaño: 'mediano', sexo: 'hembra' },
+  ],
+  [
+    { id: 'roma', nombre: 'Roma', especie: 'Perro', raza: 'Bulldog francés', tamaño: 'pequeño', sexo: 'hembra' },
+    { id: 'simba', nombre: 'Simba', especie: 'Gato', raza: 'Naranja doméstico', tamaño: 'mediano', sexo: 'macho' },
+  ],
+  [
+    { id: 'bruno', nombre: 'Bruno', especie: 'Perro', raza: 'Ovejero alemán', tamaño: 'grande', sexo: 'macho' },
+    { id: 'kiara', nombre: 'Kiara', especie: 'Perro', raza: 'Cocker spaniel', tamaño: 'mediano', sexo: 'hembra' },
+  ],
+  [
+    { id: 'olivia', nombre: 'Olivia', especie: 'Perro', raza: 'Shih tzu', tamaño: 'pequeño', sexo: 'hembra' },
+    { id: 'thor', nombre: 'Thor', especie: 'Perro', raza: 'Pitbull', tamaño: 'grande', sexo: 'macho' },
+  ],
+  [
+    { id: 'coco', nombre: 'Coco', especie: 'Perro', raza: 'Yorkshire', tamaño: 'pequeño', sexo: 'macho' },
+    { id: 'mora', nombre: 'Mora', especie: 'Gato', raza: 'Siamés', tamaño: 'pequeño', sexo: 'hembra' },
+  ],
+  [
+    { id: 'bimba', nombre: 'Bimba', especie: 'Perro', raza: 'Border collie', tamaño: 'mediano', sexo: 'hembra' },
+    { id: 'felix', nombre: 'Félix', especie: 'Gato', raza: 'Atigrado', tamaño: 'pequeño', sexo: 'macho' },
+  ],
+  [
+    { id: 'rocky', nombre: 'Rocky', especie: 'Perro', raza: 'Boxer', tamaño: 'grande', sexo: 'macho' },
+    { id: 'uma', nombre: 'Uma', especie: 'Perro', raza: 'Beagle', tamaño: 'mediano', sexo: 'hembra' },
+  ],
+  [
+    { id: 'pancho', nombre: 'Pancho', especie: 'Perro', raza: 'Salchicha', tamaño: 'pequeño', sexo: 'macho' },
+    { id: 'cleo', nombre: 'Cleo', especie: 'Gato', raza: 'Carey', tamaño: 'pequeño', sexo: 'hembra' },
+  ],
+  [
+    { id: 'zeus', nombre: 'Zeus', especie: 'Perro', raza: 'Dogo argentino', tamaño: 'grande', sexo: 'macho' },
+    { id: 'alma', nombre: 'Alma', especie: 'Perro', raza: 'Mestiza', tamaño: 'mediano', sexo: 'hembra' },
+  ],
 ];
+
+const clinicaServices = [
+  { nombre: 'Consulta general', precio: 25000, meds: ['Complejo vitamínico x 7 días'] },
+  { nombre: 'Vacunación anual', precio: 18000, meds: ['Vacuna anual aplicada'] },
+  { nombre: 'Control dermatológico', precio: 28000, meds: ['Shampoo medicado 2 veces por semana'] },
+  { nombre: 'Evaluación prequirúrgica', precio: 30000, meds: ['Ayuno indicado y análisis prequirúrgico'] },
+  { nombre: 'Control renal', precio: 27000, meds: ['Alimento renal indicado'] },
+  { nombre: 'Extracción de sangre', precio: 22000, meds: ['Muestra enviada a laboratorio'] },
+  { nombre: 'Consulta traumatológica', precio: 32000, meds: ['Meloxicam 3 días'] },
+  { nombre: 'Limpieza dental', precio: 45000, meds: ['Antibiótico preventivo 5 días'] },
+];
+
+const peluqueriaServices = [
+  { nombre: 'Baño + corte higiénico', precio: 12000 },
+  { nombre: 'Baño sanitario perro grande', precio: 18000 },
+  { nombre: 'Corte de raza + baño', precio: 15000 },
+  { nombre: 'Baño medicado', precio: 14000 },
+  { nombre: 'Deslanado + baño profundo', precio: 22000 },
+  { nombre: 'Baño + corte de mantenimiento', precio: 13000 },
+  { nombre: 'Baño perro grande', precio: 19000 },
+  { nombre: 'Corte tijera + baño', precio: 12500 },
+];
+
+const estados = [
+  'finalizado',
+  'servicio terminado',
+  'cancelado',
+  'confirmado',
+  'pendiente',
+  'traslado confirmado',
+  'buscando',
+  'reprogramar',
+  'peluqueria finalizada',
+];
+
+const cancelaciones = [
+  { canceladoPor: 'cliente', motivo: 'El cliente avisó que no podía asistir por un imprevisto familiar.' },
+  { canceladoPor: 'admin', motivo: 'Administración canceló por reorganización de agenda y ofreció reprogramación prioritaria.' },
+  { canceladoPor: 'transportista', motivo: 'El transportista informó demora por corte de calle y no llegó al domicilio a tiempo.' },
+  { canceladoPor: 'peluquera', motivo: 'Peluquería recomendó cancelar por irritación en la piel y derivar a consulta médica.' },
+];
+
+const comentariosClinica = [
+  'Control general completo. Peso estable, mucosas normales y buen ánimo.',
+  'Se revisó evolución del cuadro. La mascota respondió bien al tratamiento indicado.',
+  'Se recomienda seguimiento en 15 días y observar apetito, ánimo y consumo de agua.',
+  'Paciente tranquilo durante la consulta. Se entregaron pautas de alarma al dueño.',
+  'Se indicó control preventivo y actualización de libreta sanitaria.',
+];
+
+const comentariosPeluqueria = [
+  'Se realizó baño hipoalergénico, secado completo y corte prolijo.',
+  'Se retiraron nudos detrás de orejas y se recomendó cepillado semanal.',
+  'Servicio terminado sin inconvenientes. La mascota toleró bien el baño.',
+  'Se usó shampoo medicado indicado por veterinaria y se observó menos descamación.',
+  'Corte de mantenimiento realizado. Se avisó al dueño sobre uñas largas.',
+];
+
+function slugify(value) {
+  return value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+function buildDemoUsers() {
+  return baseClients.map(([nombre, apellido, barrio, calle], index) => {
+    const pair = petPairs[index % petPairs.length].map((pet, petIndex) => ({
+      ...pet,
+      id: `${pet.id}-${String(index + 1).padStart(2, '0')}-${petIndex + 1}`,
+    }));
+
+    return {
+      id: `demo-cliente-${slugify(`${nombre}-${apellido}`)}-${String(index + 1).padStart(2, '0')}`,
+      nombre,
+      apellido,
+      email: `${slugify(`${nombre}.${apellido}`)}.${String(index + 1).padStart(2, '0')}@magalimartin.test`,
+      dni: String(24000000 + index * 137291).slice(0, 8),
+      telefonoPrincipal: `2954${String(120000 + index * 731).padStart(6, '0')}`,
+      barrio,
+      calle,
+      altura: String(250 + index * 37),
+      mascotas: pair,
+    };
+  });
+}
+
+function buildDemoSchedule() {
+  const turnos = [];
+  const minuteOptions = [0, 30];
+  const hourOptions = [8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19];
+
+  users.forEach((user, userIndex) => {
+    const amount = 3 + (userIndex % 3 === 0 ? 1 : 0);
+    for (let turnIndex = 0; turnIndex < amount; turnIndex += 1) {
+      const tipo = (userIndex + turnIndex) % 2 === 0 ? 'clinica' : 'peluqueria';
+      const services = tipo === 'clinica' ? clinicaServices : peluqueriaServices;
+      const service = services[(userIndex + turnIndex * 2) % services.length];
+      const estado = estados[(userIndex * 2 + turnIndex) % estados.length];
+      const cancelacion = cancelaciones[(userIndex + turnIndex) % cancelaciones.length];
+      const offset = -330 + ((userIndex * 17 + turnIndex * 41) % 420);
+      const hour = hourOptions[(userIndex + turnIndex * 3) % hourOptions.length];
+      const minute = minuteOptions[(userIndex + turnIndex) % minuteOptions.length];
+      const necesitaTraslado = tipo === 'peluqueria' && (userIndex + turnIndex) % 3 !== 1;
+      const comentarioBase = tipo === 'clinica'
+        ? comentariosClinica[(userIndex + turnIndex) % comentariosClinica.length]
+        : comentariosPeluqueria[(userIndex + turnIndex) % comentariosPeluqueria.length];
+
+      turnos.push({
+        user: userIndex,
+        pet: turnIndex % user.mascotas.length,
+        offset,
+        hour,
+        minute,
+        tipo,
+        servicioNombre: service.nombre,
+        estado,
+        precio: service.precio,
+        metodoPago: (userIndex + turnIndex) % 2 === 0 ? 'efectivo' : 'transferencia',
+        traslado: necesitaTraslado,
+        canceladoPor: estado === 'cancelado' ? cancelacion.canceladoPor : undefined,
+        motivo: estado === 'cancelado' ? cancelacion.motivo : '',
+        comentario: estado === 'cancelado'
+          ? `${comentarioBase} Registro de cancelación: ${cancelacion.motivo}`
+          : comentarioBase,
+        meds: tipo === 'clinica' ? service.meds : [],
+      });
+    }
+  });
+
+  return turnos;
+}
+
+const users = buildDemoUsers();
+const schedule = buildDemoSchedule();
 
 function buildUserDoc(user) {
   return {
@@ -314,7 +428,7 @@ function buildTurnoDoc(item, index) {
     mascotaId: pet.id,
     mascotaNombre: pet.nombre,
     mascotaTamaño: pet.tamaño,
-    servicioId: item.servicioNombre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+    servicioId: slugify(item.servicioNombre),
     servicioNombre: item.servicioNombre,
     precio: item.precio,
     metodoPago: item.metodoPago,
@@ -352,19 +466,19 @@ async function clearSeedData() {
   let deletedMascotas = 0;
   let deletedUsers = 0;
 
-  for (const user of users) {
-    for (const pet of user.mascotas) {
-      const turnosSnapshot = await db.collection('users').doc(user.id).collection('mascotas').doc(pet.id).collection('turnos').get();
+  const demoUsersSnapshot = await db.collection('users').where('demoSeed', '==', DEMO_TAG).get();
+
+  for (const userDoc of demoUsersSnapshot.docs) {
+    const mascotasSnapshot = await userDoc.ref.collection('mascotas').get();
+
+    for (const mascotaDoc of mascotasSnapshot.docs) {
+      const turnosSnapshot = await mascotaDoc.ref.collection('turnos').get();
       deletedTurnos += await deleteBatch(turnosSnapshot);
     }
-    const mascotasSnapshot = await db.collection('users').doc(user.id).collection('mascotas').get();
+
     deletedMascotas += await deleteBatch(mascotasSnapshot);
-    const userRef = db.collection('users').doc(user.id);
-    const userDoc = await userRef.get();
-    if (userDoc.exists && userDoc.data()?.demoSeed === DEMO_TAG) {
-      await userRef.delete();
-      deletedUsers += 1;
-    }
+    await userDoc.ref.delete();
+    deletedUsers += 1;
   }
 
   console.log(`Datos demo eliminados: ${deletedUsers} usuarios, ${deletedMascotas} mascotas, ${deletedTurnos} turnos.`);
